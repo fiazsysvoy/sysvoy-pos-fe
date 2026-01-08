@@ -58,10 +58,10 @@ export function AppSidebar() {
             </button>
 
             {/* Sidebar */}
-                <Sidebar className="w-64">
+                <Sidebar className="w-32">
                     <SidebarContent className="h-full">
                         <SidebarGroup>
-                            <SidebarGroupLabel>POS</SidebarGroupLabel>
+                            {/* <SidebarGroupLabel>POS</SidebarGroupLabel> */}
                             <SidebarGroupContent>
                                 <SidebarMenu className="flex flex-col items-center gap-4">
                                     {items.map((item) => (

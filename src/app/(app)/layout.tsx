@@ -4,7 +4,10 @@ import Navbar from "@/app-components/navbar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{
+    "--sidebar-width": "8rem",        // w-32
+    "--sidebar-width-icon": "3rem",
+  } as React.CSSProperties}>
       <div className="w-full flex">
         <AppSidebar />
         <main className="flex-1 flex flex-col bg-background">

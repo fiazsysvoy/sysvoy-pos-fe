@@ -48,6 +48,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Hide scrollbar for all browsers */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
 }
 
 
@@ -58,5 +67,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Hide scrollbar for all browsers */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
 }
