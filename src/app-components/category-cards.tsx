@@ -31,52 +31,11 @@ const iconMap: Record<string, any> = {
   All: Grid2X2,
 };
 
-export default function CategoryCards() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("token");
-
-      try {
-        const res = await axios.get(`${apiUrl}api/categories`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log(res);
-
-        // Map API response to expected structure
-        const data: Category[] = res.data.data.map((cat: any) => ({
-          id: cat.id,
-          name: cat.name,
-          itemsCount: cat.items?.length || 0, // example if API returns items array
-          imageUrl: cat.imageUrl || "", // or map to icon later
-        }));
-        const allCategory: Category = {
-          id: "all",
-          name: "All",
-          itemsCount: categories.reduce((sum, cat) => sum + (cat.itemsCount || 0), 0),
-          imageUrl: "", // optional, could be Grid2X2 icon
-        };
-        const updatedData = [allCategory, ...data];
-        setCategories(updatedData);
-      } catch (err: unknown) {
-        let message = "Failed to fetch categories!";
-        if (axios.isAxiosError(err)) {
-          message = err.response?.data?.message || message;
-        }
-        toast.error(message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-  }, []);
+interface Props {
+  categories: Category[];
+  loading: boolean;
+}
+export default function CategoryCards({ categories, loading }: Props) {
 
   return (
     <div className=" overflow-hidden">

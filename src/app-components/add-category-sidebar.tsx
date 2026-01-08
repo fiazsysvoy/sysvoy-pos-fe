@@ -168,7 +168,7 @@ export default function AddCategorySidebar({
                     onClick={handleSubmit}
                     disabled={loading}
                 >
-                    {loading ? "Saving..." : "Save Category"}
+                    {loading ? "Saving..." : "Add Category"}
                 </Button>
             </div>
         </>
