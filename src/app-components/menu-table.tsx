@@ -6,6 +6,7 @@ import axios from "axios"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import ConfirmModal from "./ConfirmModal"
+import SingleProductSidebar from "./single-product-sidebar"
 
 interface ProductImage {
   publicId: string
@@ -17,47 +18,69 @@ interface Product {
   name: string
   description?: string
   images: ProductImage[]
-  stock: number
+  stock: number,
+  categoryId: string,
   category?: {
+    id: string,
     name: string
   }
   price: number
   available: boolean
 }
 
-export default function MenuTable() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(false)
+interface Category {
+  id: string
+  name: string
+}
+
+interface Props {
+  categories: Category[]
+  products: Product[]
+  loading: boolean
+  fetchProducts: () => Promise<void>
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>
+}
+
+export default function MenuTable({ categories , loading, products,setProducts, fetchProducts}: Props) {
+  // const [products, setProducts] = useState<Product[]>([])
+  // const [loading, setLoading] = useState(false)
 
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [openProductMenu, setOpenProductMenu] = useState(false)
+  const [editProduct, setEditProduct] = useState<null | Product>(null)
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true)
+  const handleEdit = (product: Product) => {
+    setEditProduct(product)
+    setOpenProductMenu(true)
+  }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL
-        const token = localStorage.getItem("token")
+  //   const fetchProducts = async () => {
+  //     try {
+  //       setLoading(true)
 
-        const res = await axios.get(`${apiUrl}api/products`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        console.log(res.data)
-        setProducts(res.data.data)
-      } catch (err) {
-        toast.error("Failed to fetch products")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
+  //       const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  //       const token = localStorage.getItem("token")
 
-    fetchProducts()
-  }, [])
+  //       const res = await axios.get(`${apiUrl}api/products`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       })
+  //       console.log(res.data)
+  //       setProducts(res.data.data)
+  //     } catch (err) {
+  //       toast.error("Failed to fetch products")
+  //       console.error(err)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+    
+  // useEffect(() => {
+  //   fetchProducts()
+  // }, [])
 
   const deleteProduct = async () => {
     if (!selectedProductId) return
@@ -147,7 +170,7 @@ export default function MenuTable() {
               </span>
 
               <div className="flex gap-3 items-center">
-                <Pencil className="h-4 w-4 cursor-pointer" />
+                <Pencil className="h-4 w-4 cursor-pointer" onClick={() => handleEdit(product)} />
                 <Trash2
                   className="h-4 w-4 text-red-500 cursor-pointer"
                   onClick={() => {
@@ -172,6 +195,13 @@ export default function MenuTable() {
             </div>
           </div>
         ))
+      )}
+      {openProductMenu && editProduct && (
+        <SingleProductSidebar categories={categories}
+         onClose={() => setOpenProductMenu(false)} 
+         product={editProduct}
+         fetchProducts={fetchProducts}
+        />
       )}
     </div>
   )

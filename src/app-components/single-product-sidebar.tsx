@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import axios from "axios"
@@ -11,13 +11,34 @@ interface Category {
     name: string
 }
 
-export default function AddProductSidebar({
+interface ProductImage {
+    publicId: string
+    url: string
+}
+
+interface Product {
+    id: string
+    name: string
+    description?: string
+    price: number
+    stock: number
+    categoryId: string
+    images?: ProductImage[] // existing image URLs
+}
+
+interface Props {
+    onClose: () => void
+    fetchProducts: () => void
+    categories: Category[]
+    product?: Product
+}
+
+export default function SingleProductSidebar({
     onClose,
     categories,
-}: {
-    onClose: () => void
-    categories: Category[]
-}) {
+    product, 
+    fetchProducts,
+}: Props) {
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
     const [price, setPrice] = useState<number | "">("")
@@ -26,6 +47,24 @@ export default function AddProductSidebar({
     const [images, setImages] = useState<File[]>([])
     const [previews, setPreviews] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
+
+
+    const isEdit = Boolean(product)
+
+    useEffect(() => {
+        if (!product) return
+
+        setName(product.name)
+        setDescription(product.description || "")
+        setPrice(product.price)
+        setStock(product.stock)
+        setCategoryId(product.categoryId)
+
+        if (product.images?.length) {
+            const imagesUrls = product.images.map(img => img.url);
+            setPreviews(imagesUrls)
+        }
+    }, [product])
 
     // Handle multiple image selection
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,8 +82,53 @@ export default function AddProductSidebar({
     }
 
 
+    // const handleSubmit = async () => {
+    //     if (!name || !price || !stock || !categoryId || images.length === 0) {
+    //         toast.error("Please fill all required fields")
+    //         return
+    //     }
+
+    //     const formData = new FormData()
+    //     formData.append("name", name)
+    //     formData.append("description", description)
+    //     formData.append("price", String(price))
+    //     formData.append("stock", String(stock))
+    //     formData.append("categoryId", categoryId)
+
+    //     images.forEach((img) => {
+    //         formData.append("prodImages", img)
+    //     })
+
+    //     try {
+    //         setLoading(true)
+    //         const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    //         const token = localStorage.getItem("token")
+
+    //         await axios.post(`${apiUrl}api/products`, formData, {
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`,
+    //                 "Content-Type": "multipart/form-data",
+    //             },
+    //         })
+
+    //         toast.success("Product added successfully!")
+    //         onClose()
+    //     } catch (err: unknown) {
+    //         let message = "Failed to add product"
+
+    //         if (axios.isAxiosError(err)) {
+    //             message = err.response?.data?.message || message
+    //         }
+
+    //         toast.error(message)
+    //         console.error(err)
+    //     } finally {
+    //         setLoading(false)
+    //     }
+    // }
+
     const handleSubmit = async () => {
-        if (!name || !price || !stock || !categoryId || images.length === 0) {
+        if (!name || !price || !stock || !categoryId) {
             toast.error("Please fill all required fields")
             return
         }
@@ -65,28 +149,38 @@ export default function AddProductSidebar({
             const apiUrl = process.env.NEXT_PUBLIC_API_URL
             const token = localStorage.getItem("token")
 
-            await axios.post(`${apiUrl}api/products`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data",
-                },
-            })
-
-            toast.success("Product added successfully!")
-            onClose()
-        } catch (err: unknown) {
-            let message = "Failed to add product"
-
-            if (axios.isAxiosError(err)) {
-                message = err.response?.data?.message || message
+            if (isEdit && product) {
+                await axios.patch(
+                    `${apiUrl}api/products/${product.id}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+                )
+                toast.success("Product updated successfully!")
+            } else {
+                await axios.post(`${apiUrl}api/products`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                })
+                toast.success("Product added successfully!")
             }
 
-            toast.error(message)
+            onClose()
+            fetchProducts()
+        } catch (err) {
+            toast.error("Failed to save product")
             console.error(err)
         } finally {
             setLoading(false)
         }
     }
+
 
     const removeImage = (index: number) => {
         setImages((prev) => prev.filter((_, i) => i !== index))
@@ -100,12 +194,12 @@ export default function AddProductSidebar({
             <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
 
             {/* Sidebar */}
-            <div className="fixed top-0 right-0 h-full w-[420px] bg-[#0f0f0f] z-50 p-6 flex flex-col px-4 py-6">
+            <div className="fixed top-0 right-0 h-full w-[420px] bg-zinc-300 dark:bg-[#0f0f0f] z-50 p-6 flex flex-col px-4 py-6 text-black">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-white">Add New Product</h2>
+                    <h2 className="text-xl font-semibold text-black dark:text-white">{isEdit ? "Edit Product" : "Add New Product"}</h2>
                     <button onClick={onClose}>
-                        <X className="text-white" />
+                        <X className="text-black dark:text-white" />
                     </button>
                 </div>
 
@@ -113,7 +207,7 @@ export default function AddProductSidebar({
                 <div className="flex-1 space-y-4">
                     {/* Images */}
                     <div>
-                        <label className="text-sm text-gray-300">Product Images</label>
+                        <label className="text-sm text-black dark:text-gray-300">Product Images</label>
 
                         <div className="mt-2 flex flex-wrap gap-3">
                             {previews.map((src, i) => (
@@ -127,7 +221,7 @@ export default function AddProductSidebar({
                                     {/* Remove button */}
                                     <button
                                         onClick={() => removeImage(i)}
-                                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                                        className="absolute -top-2 -right-2 bg-red-600  text-white rounded-full p-1 hover:bg-red-700"
                                     >
                                         <X size={14} />
                                     </button>
@@ -135,7 +229,7 @@ export default function AddProductSidebar({
                             ))}
 
                             {!previews.length && (
-                                <div className="h-36 w-36 bg-gray-700 flex items-center justify-center text-gray-400 rounded">
+                                <div className="h-36 w-36 bg-zinc-400  dark:bg-gray-700 flex items-center justify-center dark:text-gray-400 rounded">
                                     No Images
                                 </div>
                             )}
@@ -152,7 +246,10 @@ export default function AddProductSidebar({
 
                         <label
                             htmlFor="product-images"
-                            className="inline-block mt-2 cursor-pointer bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700"
+                            className="inline-block mt-2 cursor-pointer
+                            dark:bg-gray-800 dark:text-white px-4 py-2 
+                            rounded dark:hover:bg-gray-700
+                            text-pink-500"
                         >
                             Select Images
                         </label>
@@ -160,41 +257,41 @@ export default function AddProductSidebar({
 
                     {/* Name */}
                     <div>
-                        <label className="text-sm text-gray-300 ">Product Name</label>
+                        <label className="text-sm text-black dark:text-gray-300 ">Product Name</label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="mt-1 w-full bg-gray-800 text-white rounded px-3 py-2"
+                            className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                             placeholder="e.g. Chicken Burger"
                         />
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="text-sm text-gray-300">Description</label>
+                        <label className="text-sm text-black dark:text-gray-300">Description</label>
                         <textarea
                             rows={3}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="mt-1 w-full bg-gray-800 text-white rounded px-3 py-2"
+                            className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                         />
                     </div>
 
                     {/* Price & Stock */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm text-gray-300">Price</label>
+                            <label className="text-sm text-black dark:text-gray-300">Price</label>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={price}
                                 onChange={(e) => setPrice(Number(e.target.value))}
-                                className="mt-1 w-full bg-gray-800 text-white rounded px-3 py-2"
+                                className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                             />
                         </div>
 
                         <div>
-                            <label className="text-sm text-gray-300">Stock</label>
+                            <label className="text-sm text-black dark:text-gray-300">Stock</label>
                             <input
                                 type="number"
                                 value={stock}
@@ -206,18 +303,18 @@ export default function AddProductSidebar({
 
                                     setStock(Math.floor(Number(value)));
                                 }}
-                                className="mt-1 w-full bg-gray-800 text-white rounded px-3 py-2"
+                                className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                             />
                         </div>
                     </div>
 
                     {/* Category */}
                     <div>
-                        <label className="text-sm text-gray-300">Category</label>
+                        <label className="text-sm text-black dark:text-gray-300">Category</label>
                         <select
                             value={categoryId}
                             onChange={(e) => setCategoryId(e.target.value)}
-                            className="mt-1 w-full bg-gray-800 text-white rounded px-3 py-2"
+                            className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                         >
                             <option value="">Select category</option>
                             {categories.map((cat) => (
@@ -233,9 +330,9 @@ export default function AddProductSidebar({
                 <Button
                     disabled={loading}
                     onClick={handleSubmit}
-                    className="bg-pink-300 text-black hover:bg-pink-400 mt-4"
+                    className="bg-pink-500 dark:bg-pink-300 text-black dark:hover:bg-pink-400 hover:bg-pink-400 mt-4"
                 >
-                    {loading ? "Saving..." : "Add Product"}
+                    {loading ? "Saving..." : isEdit ? "Update Product" : "Add Product"}
                 </Button>
             </div>
         </>

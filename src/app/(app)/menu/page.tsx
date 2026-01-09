@@ -7,9 +7,21 @@ import CategoryCards from "@/app-components/category-cards"
 import MenuTabs from "@/app-components/menu-tabs"
 import MenuTable from "@/app-components/menu-table"
 import AddCategorySidebar from "@/app-components/add-category-sidebar"
-import AddProductSidebar from "@/app-components/add-product-sidebar"
+import SingleProductSidebar from "@/app-components/single-product-sidebar"
 import { toast } from "sonner"
 import axios from "axios"
+
+interface Product {
+  id: string
+  name: string
+  description?: string
+  images: { publicId: string; url: string }[]
+  stock: number
+  categoryId: string
+  category?: { id: string; name: string }
+  price: number
+  available: boolean
+}
 
 interface Category {
   id: string;
@@ -24,6 +36,26 @@ export default function MenuPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [products, setProducts] = useState<Product[]>([])
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingCategories(true)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      const token = localStorage.getItem("token")
+
+      const res = await axios.get(`${apiUrl}api/products`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setProducts(res.data.data)
+    } catch (err) {
+      toast.error("Failed to fetch products")
+      console.error(err)
+    } finally {
+      setLoadingCategories(false)
+    }
+  }
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -36,7 +68,6 @@ export default function MenuPage() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(res.data, '==cat')
 
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
@@ -45,10 +76,7 @@ export default function MenuPage() {
         imageUrl: cat.imageUrl || "",
       }));
 
-      const totalItems = data.reduce(
-        (sum, cat) => sum + (cat.itemsCount || 0),
-        0
-      );
+      const totalItems = res.data.meta.total;
 
       const allCategory: Category = {
         id: "all",
@@ -66,6 +94,7 @@ export default function MenuPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchProducts();
   }, []);
 
   return (
@@ -97,7 +126,12 @@ export default function MenuPage() {
         </div>
 
         {/* <MenuTabs /> */}
-        <MenuTable />
+        <MenuTable 
+          categories={categories} 
+          products={products}
+          setProducts={setProducts}
+          loading={loadingCategories}
+          fetchProducts={fetchProducts} />
       </div>
 
       {/* Sidebar for adding category*/}
@@ -107,7 +141,7 @@ export default function MenuPage() {
 
       {/* sidebar for adding product */}
       {openProductMenu && (
-        <AddProductSidebar categories={categories} onClose={() => setOpenProductMenu(false)} />
+        <SingleProductSidebar categories={categories} onClose={() => setOpenProductMenu(false)} fetchProducts={fetchProducts} />
       )}
     </>
   )
