@@ -23,7 +23,7 @@ interface Product {
     price: number
     stock: number
     categoryId: string
-    images?: ProductImage[] // existing image URLs
+    images?: ProductImage[]
 }
 
 interface Props {
@@ -36,7 +36,7 @@ interface Props {
 export default function SingleProductSidebar({
     onClose,
     categories,
-    product, 
+    product,
     fetchProducts,
 }: Props) {
     const [name, setName] = useState("")
@@ -44,13 +44,16 @@ export default function SingleProductSidebar({
     const [price, setPrice] = useState<number | "">("")
     const [stock, setStock] = useState<number | "">("")
     const [categoryId, setCategoryId] = useState("")
-    const [images, setImages] = useState<File[]>([])
-    const [previews, setPreviews] = useState<string[]>([])
-    const [loading, setLoading] = useState(false)
 
+    const [existingImages, setExistingImages] = useState<ProductImage[]>([])
+    const [newImages, setNewImages] = useState<File[]>([])
+    const [newPreviews, setNewPreviews] = useState<string[]>([])
+
+    const [loading, setLoading] = useState(false)
 
     const isEdit = Boolean(product)
 
+    // Initialize form fields for edit
     useEffect(() => {
         if (!product) return
 
@@ -61,71 +64,34 @@ export default function SingleProductSidebar({
         setCategoryId(product.categoryId)
 
         if (product.images?.length) {
-            const imagesUrls = product.images.map(img => img.url);
-            setPreviews(imagesUrls)
+            setExistingImages(product.images)
         }
     }, [product])
 
-    // Handle multiple image selection
+    // Handle new image selection
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || [])
         if (!files.length) return
 
-        setImages((prev) => [...prev, ...files])
-        setPreviews((prev) => [
+        setNewImages((prev) => [...prev, ...files])
+        setNewPreviews((prev) => [
             ...prev,
             ...files.map((file) => URL.createObjectURL(file)),
         ])
 
-        // reset input so same file can be re-selected
         e.target.value = ""
     }
 
+    // Remove old image
+    const removeExistingImage = (index: number) => {
+        setExistingImages((prev) => prev.filter((_, i) => i !== index))
+    }
 
-    // const handleSubmit = async () => {
-    //     if (!name || !price || !stock || !categoryId || images.length === 0) {
-    //         toast.error("Please fill all required fields")
-    //         return
-    //     }
-
-    //     const formData = new FormData()
-    //     formData.append("name", name)
-    //     formData.append("description", description)
-    //     formData.append("price", String(price))
-    //     formData.append("stock", String(stock))
-    //     formData.append("categoryId", categoryId)
-
-    //     images.forEach((img) => {
-    //         formData.append("prodImages", img)
-    //     })
-
-    //     try {
-    //         setLoading(true)
-    //         const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    //         const token = localStorage.getItem("token")
-
-    //         await axios.post(`${apiUrl}api/products`, formData, {
-    //             headers: {
-    //                 Authorization: `Bearer ${token}`,
-    //                 "Content-Type": "multipart/form-data",
-    //             },
-    //         })
-
-    //         toast.success("Product added successfully!")
-    //         onClose()
-    //     } catch (err: unknown) {
-    //         let message = "Failed to add product"
-
-    //         if (axios.isAxiosError(err)) {
-    //             message = err.response?.data?.message || message
-    //         }
-
-    //         toast.error(message)
-    //         console.error(err)
-    //     } finally {
-    //         setLoading(false)
-    //     }
-    // }
+    // Remove new image
+    const removeNewImage = (index: number) => {
+        setNewImages((prev) => prev.filter((_, i) => i !== index))
+        setNewPreviews((prev) => prev.filter((_, i) => i !== index))
+    }
 
     const handleSubmit = async () => {
         if (!name || !price || !stock || !categoryId) {
@@ -140,8 +106,12 @@ export default function SingleProductSidebar({
         formData.append("stock", String(stock))
         formData.append("categoryId", categoryId)
 
-        images.forEach((img) => {
-            formData.append("prodImages", img)
+        // Append retained old images
+        formData.append("images", JSON.stringify(existingImages))
+
+        // Append new images
+        newImages.forEach((file) => {
+            formData.append("prodImages", file)
         })
 
         try {
@@ -150,16 +120,12 @@ export default function SingleProductSidebar({
             const token = localStorage.getItem("token")
 
             if (isEdit && product) {
-                await axios.patch(
-                    `${apiUrl}api/products/${product.id}`,
-                    formData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "multipart/form-data",
-                        },
-                    }
-                )
+                await axios.patch(`${apiUrl}api/products/${product.id}`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                })
                 toast.success("Product updated successfully!")
             } else {
                 await axios.post(`${apiUrl}api/products`, formData, {
@@ -181,13 +147,6 @@ export default function SingleProductSidebar({
         }
     }
 
-
-    const removeImage = (index: number) => {
-        setImages((prev) => prev.filter((_, i) => i !== index))
-        setPreviews((prev) => prev.filter((_, i) => i !== index))
-    }
-
-
     return (
         <>
             {/* Overlay */}
@@ -197,39 +156,59 @@ export default function SingleProductSidebar({
             <div className="fixed top-0 right-0 h-full w-[420px] bg-zinc-300 dark:bg-[#0f0f0f] z-50 p-6 flex flex-col px-4 py-6 text-black">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-black dark:text-white">{isEdit ? "Edit Product" : "Add New Product"}</h2>
+                    <h2 className="text-xl font-semibold text-black dark:text-white">
+                        {isEdit ? "Edit Product" : "Add New Product"}
+                    </h2>
                     <button onClick={onClose}>
                         <X className="text-black dark:text-white" />
                     </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-4 overflow-auto scrollbar-none">
                     {/* Images */}
                     <div>
-                        <label className="text-sm text-black dark:text-gray-300">Product Images</label>
+                        <label className="text-sm text-black dark:text-gray-300">
+                            Product Images
+                        </label>
 
                         <div className="mt-2 flex flex-wrap gap-3">
-                            {previews.map((src, i) => (
-                                <div key={i} className="relative">
+                            {/* Existing Images */}
+                            {existingImages.map((img, i) => (
+                                <div key={img.publicId} className="relative">
                                     <img
-                                        src={src}
+                                        src={img.url}
                                         className="h-36 w-36 rounded object-cover border border-gray-600"
-                                        alt="preview"
+                                        alt="existing"
                                     />
-
-                                    {/* Remove button */}
                                     <button
-                                        onClick={() => removeImage(i)}
-                                        className="absolute -top-2 -right-2 bg-red-600  text-white rounded-full p-1 hover:bg-red-700"
+                                        onClick={() => removeExistingImage(i)}
+                                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
                                     >
                                         <X size={14} />
                                     </button>
                                 </div>
                             ))}
 
-                            {!previews.length && (
-                                <div className="h-36 w-36 bg-zinc-400  dark:bg-gray-700 flex items-center justify-center dark:text-gray-400 rounded">
+                            {/* New Images */}
+                            {newPreviews.map((src, i) => (
+                                <div key={i} className="relative">
+                                    <img
+                                        src={src}
+                                        className="h-36 w-36 rounded object-cover border border-gray-600"
+                                        alt="preview"
+                                    />
+                                    <button
+                                        onClick={() => removeNewImage(i)}
+                                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ))}
+
+                            {!existingImages.length && !newPreviews.length && (
+                                <div className="h-36 w-36 bg-zinc-400 dark:bg-gray-700 flex items-center justify-center dark:text-gray-400 rounded">
                                     No Images
                                 </div>
                             )}
@@ -246,10 +225,7 @@ export default function SingleProductSidebar({
 
                         <label
                             htmlFor="product-images"
-                            className="inline-block mt-2 cursor-pointer
-                            dark:bg-gray-800 dark:text-white px-4 py-2 
-                            rounded dark:hover:bg-gray-700
-                            text-pink-500"
+                            className="inline-block mt-2 cursor-pointer dark:bg-gray-800 dark:text-white px-4 py-2 rounded dark:hover:bg-gray-700 text-pink-500"
                         >
                             Select Images
                         </label>
@@ -257,7 +233,9 @@ export default function SingleProductSidebar({
 
                     {/* Name */}
                     <div>
-                        <label className="text-sm text-black dark:text-gray-300 ">Product Name</label>
+                        <label className="text-sm text-black dark:text-gray-300">
+                            Product Name
+                        </label>
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -268,7 +246,9 @@ export default function SingleProductSidebar({
 
                     {/* Description */}
                     <div>
-                        <label className="text-sm text-black dark:text-gray-300">Description</label>
+                        <label className="text-sm text-black dark:text-gray-300">
+                            Description
+                        </label>
                         <textarea
                             rows={3}
                             value={description}
@@ -280,7 +260,9 @@ export default function SingleProductSidebar({
                     {/* Price & Stock */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm text-black dark:text-gray-300">Price</label>
+                            <label className="text-sm text-black dark:text-gray-300">
+                                Price
+                            </label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -291,17 +273,18 @@ export default function SingleProductSidebar({
                         </div>
 
                         <div>
-                            <label className="text-sm text-black dark:text-gray-300">Stock</label>
+                            <label className="text-sm text-black dark:text-gray-300">
+                                Stock
+                            </label>
                             <input
                                 type="number"
                                 value={stock}
                                 min={0}
                                 step={1}
                                 onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (value === "") return setStock(0);
-
-                                    setStock(Math.floor(Number(value)));
+                                    const value = e.target.value
+                                    if (value === "") return setStock(0)
+                                    setStock(Math.floor(Number(value)))
                                 }}
                                 className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                             />
@@ -310,7 +293,9 @@ export default function SingleProductSidebar({
 
                     {/* Category */}
                     <div>
-                        <label className="text-sm text-black dark:text-gray-300">Category</label>
+                        <label className="text-sm text-black dark:text-gray-300">
+                            Category
+                        </label>
                         <select
                             value={categoryId}
                             onChange={(e) => setCategoryId(e.target.value)}

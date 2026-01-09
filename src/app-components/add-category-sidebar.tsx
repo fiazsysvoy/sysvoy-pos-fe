@@ -86,14 +86,14 @@ export default function AddCategorySidebar({
             />
 
             {/* Sidebar */}
-            <div className="fixed top-0 right-0 h-full w-[400px] bg-[#0f0f0f] z-50 p-6 flex flex-col">
+            <div className="fixed top-0 right-0 h-full w-[400px] bg-zinc-200 dark:bg-[#0f0f0f] z-50 p-6 flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold dark:text-white text-black">
                         Add New Category
                     </h2>
                     <button onClick={onClose}>
-                        <X className="text-white" />
+                        <X className="text-black dark:text-white" />
                     </button>
                 </div>
 
@@ -101,7 +101,7 @@ export default function AddCategorySidebar({
                 <div className="space-y-4 flex-1 overflow-auto">
                     {/* Image Picker */}
                     <div>
-                        <label className="text-sm text-gray-300">Category Icon</label>
+                        <label className="text-sm text-black dark:text-gray-300">Category Icon</label>
                         <div className="mt-2 flex flex-col items-start gap-3">
                             {preview ? (
                                 <img
@@ -110,7 +110,7 @@ export default function AddCategorySidebar({
                                     className="h-36 w-36 rounded object-contain border border-gray-500"
                                 />
                             ) : (
-                                <div className="h-36 w-36 rounded bg-gray-700 flex items-center justify-center text-sm text-gray-300">
+                                <div className="h-36 w-36 bg-zinc-400  dark:bg-gray-700 flex items-center justify-center dark:text-gray-400 rounded">
                                     No Icon
                                 </div>
                             )}
@@ -126,7 +126,10 @@ export default function AddCategorySidebar({
                             {/* Custom button/label */}
                             <label
                                 htmlFor="category-icon"
-                                className="cursor-pointer bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+                                className="inline-block mt-2 cursor-pointer
+                                dark:bg-gray-800 dark:text-white px-4 py-2 
+                                rounded dark:hover:bg-gray-700
+                                text-pink-500"
                             >
                                 {imageFile ? "Change Icon" : "Select Icon"}
                             </label>
@@ -141,24 +144,24 @@ export default function AddCategorySidebar({
 
                     {/* Category Name */}
                     <div>
-                        <label className="text-sm text-gray-300">Category Name</label>
+                        <label className="text-sm dark:text-gray-300">Category Name</label>
                         <input
                             type="text"
                             value={categoryName}
                             onChange={(e) => setCategoryName(e.target.value)}
-                            className="mt-1 w-full rounded bg-gray-800 px-3 py-2 text-white outline-none"
+                            className="mt-1 w-full rounded dark:bg-gray-800 px-3 py-2 dark:text-white outline-none"
                             placeholder="e.g. Burgers"
                         />
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="text-sm text-gray-300">Description</label>
+                        <label className="text-sm text-black dark:text-gray-300">Description</label>
                         <textarea
                             rows={4}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="mt-1 w-full rounded bg-gray-800 px-3 py-2 text-white outline-none"
+                            className="mt-1 w-full rounded dark:bg-gray-800 px-3 py-2 dark:text-white outline-none"
                             placeholder="Short description"
                         />
                     </div>
@@ -166,7 +169,7 @@ export default function AddCategorySidebar({
 
                 {/* Footer */}
                 <Button
-                    className="bg-pink-300 text-black hover:bg-pink-400 mt-4"
+                    className="bg-pink-500 dark:bg-pink-300 text-black dark:hover:bg-pink-400 hover:bg-pink-400 mt-4"
                     onClick={handleSubmit}
                     disabled={loading}
                 >
