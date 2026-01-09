@@ -32,9 +32,16 @@ export default function AddProductSidebar({
         const files = Array.from(e.target.files || [])
         if (!files.length) return
 
-        setImages(files)
-        setPreviews(files.map((file) => URL.createObjectURL(file)))
+        setImages((prev) => [...prev, ...files])
+        setPreviews((prev) => [
+            ...prev,
+            ...files.map((file) => URL.createObjectURL(file)),
+        ])
+
+        // reset input so same file can be re-selected
+        e.target.value = ""
     }
+
 
     const handleSubmit = async () => {
         if (!name || !price || !stock || !categoryId || images.length === 0) {
@@ -81,6 +88,12 @@ export default function AddProductSidebar({
         }
     }
 
+    const removeImage = (index: number) => {
+        setImages((prev) => prev.filter((_, i) => i !== index))
+        setPreviews((prev) => prev.filter((_, i) => i !== index))
+    }
+
+
     return (
         <>
             {/* Overlay */}
@@ -104,12 +117,21 @@ export default function AddProductSidebar({
 
                         <div className="mt-2 flex flex-wrap gap-3">
                             {previews.map((src, i) => (
-                                <img
-                                    key={i}
-                                    src={src}
-                                    className="h-36 w-36 rounded object-cover border border-gray-600"
-                                    alt="preview"
-                                />
+                                <div key={i} className="relative">
+                                    <img
+                                        src={src}
+                                        className="h-36 w-36 rounded object-cover border border-gray-600"
+                                        alt="preview"
+                                    />
+
+                                    {/* Remove button */}
+                                    <button
+                                        onClick={() => removeImage(i)}
+                                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
                             ))}
 
                             {!previews.length && (

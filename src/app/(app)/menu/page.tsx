@@ -25,45 +25,46 @@ export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchCategories = async () => {
+    setLoading(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await axios.get(`${apiUrl}api/categories`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(res.data, '==cat')
+
+      const data: Category[] = res.data.data.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name,
+        itemsCount: cat.itemsCount || 0,
+        imageUrl: cat.imageUrl || "",
+      }));
+
+      const totalItems = data.reduce(
+        (sum, cat) => sum + (cat.itemsCount || 0),
+        0
+      );
+
+      const allCategory: Category = {
+        id: "all",
+        name: "All",
+        itemsCount: totalItems,
+      };
+
+      setCategories([allCategory, ...data]);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to fetch categories");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const token = localStorage.getItem("token");
-
-      try {
-        const res = await axios.get(`${apiUrl}api/categories`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data: Category[] = res.data.data.map((cat: any) => ({
-          id: cat.id,
-          name: cat.name,
-          itemsCount: cat.items?.length || 0,
-          imageUrl: cat.imageUrl || "",
-        }));
-
-        const totalItems = data.reduce(
-          (sum, cat) => sum + (cat.itemsCount || 0),
-          0
-        );
-
-        const allCategory: Category = {
-          id: "all",
-          name: "All",
-          itemsCount: totalItems,
-        };
-
-        setCategories([allCategory, ...data]);
-      } catch (err: any) {
-        toast.error(err.response?.data?.message || "Failed to fetch categories");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCategories();
   }, []);
 
@@ -72,7 +73,7 @@ export default function MenuPage() {
       <div className="p-6 space-y-6 text-white">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Categories</h1>
+          <div className="text-xl font-semibold text-black dark:text-white">Categories</div>
           <Button
             className="bg-pink-300 text-black hover:bg-pink-400"
             onClick={() => setOpen(true)}
@@ -81,14 +82,16 @@ export default function MenuPage() {
           </Button>
         </div>
 
-        <CategoryCards categories={categories} loading={loading} />
+        <div className="text-black overflow-auto max-w-full">
+          <CategoryCards categories={categories} loading={loading} />
+        </div>
         <Separator className="bg-white/10" />
 
         {/* Menu Section */}
         <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-black">Products</div>
+          <div className="text-xl font-semibold text-black dark:text-white">Products</div>
           <Button className="bg-pink-300 text-black hover:bg-pink-400"
-          onClick={()=> setOpenProductMenu(true)}>
+            onClick={() => setOpenProductMenu(true)}>
             Add Menu Item
           </Button>
         </div>
@@ -97,9 +100,9 @@ export default function MenuPage() {
         <MenuTable />
       </div>
 
-      {/* Sidebar */}
+      {/* Sidebar for adding category*/}
       {open && (
-        <AddCategorySidebar onClose={() => setOpen(false)} />
+        <AddCategorySidebar onClose={() => setOpen(false)} onSuccess={fetchCategories} />
       )}
 
       {/* sidebar for adding product */}

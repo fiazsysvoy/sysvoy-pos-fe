@@ -8,8 +8,10 @@ import { toast } from "sonner"
 
 export default function AddCategorySidebar({
     onClose,
+    onSuccess,
 }: {
-    onClose: () => void
+    onClose: () => void,
+    onSuccess: () => void
 }) {
     const [categoryName, setCategoryName] = useState("")
     const [description, setDescription] = useState("")
@@ -54,7 +56,7 @@ export default function AddCategorySidebar({
             toast.success("Category added!", {
                 duration: 4000, // 4 seconds
             })
-            //   alert("Category added successfully!")
+            onSuccess(); // fetch the updated categories
             onClose() // close sidebar
         } catch (err: unknown) {
             let message = "Failed to add new category!"

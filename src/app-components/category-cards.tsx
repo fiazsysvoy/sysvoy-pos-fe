@@ -50,7 +50,7 @@ export default function CategoryCards({ categories, loading }: Props) {
           <Card
             key={cat.id}
             className={`flex-shrink-0 w-32 p-4 flex flex-col items-start gap-3 cursor-pointer border-none
-              ${cat.name === "All" ? "bg-pink-200 text-black" : "bg-zinc-800 text-white"}
+              ${cat.name === "All" ? "bg-pink-200 text-black" : "bg-zinc-200 text-black dark:bg-zinc-800 dark:text-white"}
             `}
           >
             <div className="h-16 w-16 flex items-center">
