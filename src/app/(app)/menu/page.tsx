@@ -6,10 +6,10 @@ import { Separator } from "@/components/ui/separator"
 import CategoryCards from "@/app-components/category-cards"
 import MenuTabs from "@/app-components/menu-tabs"
 import MenuTable from "@/app-components/menu-table"
-import AddCategorySidebar from "@/app-components/add-category-sidebar"
 import SingleProductSidebar from "@/app-components/single-product-sidebar"
 import { toast } from "sonner"
 import axios from "axios"
+import CategorySidebar from "@/app-components/category-sidebar"
 
 interface Product {
   id: string
@@ -26,13 +26,15 @@ interface Product {
 interface Category {
   id: string;
   name: string;
+  description?: string;
   itemsCount?: number;
   imageUrl?: string;
 }
 
 export default function MenuPage() {
-  const [open, setOpen] = useState(false)
-  const [openProductMenu, setOpenProductMenu] = useState(false)
+  const [openProductMenu, setOpenProductMenu] = useState(false);
+  const [openCategorySidebar, setOpenCategorySidebar] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,11 @@ export default function MenuPage() {
     }
   }
 
+  const handleCategorySelect = (category: Category) => {
+    setSelectedCategory(category);
+    setOpenCategorySidebar(true);
+  };
+
   const fetchCategories = async () => {
     setLoading(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -72,6 +79,7 @@ export default function MenuPage() {
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
+        description: cat.description || "",
         itemsCount: cat.itemsCount || 0,
         imageUrl: cat.imageUrl || "",
       }));
@@ -105,14 +113,15 @@ export default function MenuPage() {
           <div className="text-xl font-semibold text-black dark:text-white">Categories</div>
           <Button
             className="bg-pink-300 text-black hover:bg-pink-400"
-            onClick={() => setOpen(true)}
+            onClick={() => setOpenCategorySidebar(true)}
           >
             Add New Category
           </Button>
         </div>
 
         <div className="text-black overflow-auto max-w-full">
-          <CategoryCards categories={categories} loading={loading} />
+          <CategoryCards onSelect={handleCategorySelect}
+            categories={categories} loading={loading} />
         </div>
         <Separator className="bg-white/10" />
 
@@ -126,17 +135,24 @@ export default function MenuPage() {
         </div>
 
         {/* <MenuTabs /> */}
-        <MenuTable 
-          categories={categories} 
+        <MenuTable
+          categories={categories}
           products={products}
           setProducts={setProducts}
           loading={loadingCategories}
           fetchProducts={fetchProducts} />
       </div>
 
-      {/* Sidebar for adding category*/}
-      {open && (
-        <AddCategorySidebar onClose={() => setOpen(false)} onSuccess={fetchCategories} />
+      {/* Sidebar for adding/editing category*/}
+      {openCategorySidebar && (
+        <CategorySidebar
+          onClose={() => {
+            setOpenCategorySidebar(false);
+            setSelectedCategory(undefined);
+          }}
+          category={selectedCategory}
+          onSuccess={fetchCategories}
+        />
       )}
 
       {/* sidebar for adding product */}
