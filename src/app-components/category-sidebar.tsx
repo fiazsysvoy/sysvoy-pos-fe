@@ -187,7 +187,7 @@ export default function CategorySidebar({
                         onClick={() => setConfirmOpen(true)}
                         disabled={deleting || saving}
                     >
-                        Delete
+                        {deleting ? "Deleting..." : "Delete"}
                     </Button>
                 )}
 

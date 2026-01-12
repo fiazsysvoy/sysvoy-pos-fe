@@ -37,13 +37,14 @@ interface Props {
   categories: Category[]
   products: Product[]
   loading: boolean
-  fetchProducts: () => Promise<void>
+  onSuccess: () => Promise<void>
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
 }
 
-export default function MenuTable({ categories, loading, products, setProducts, fetchProducts }: Props) {
-  // const [products, setProducts] = useState<Product[]>([])
-  // const [loading, setLoading] = useState(false)
+export default function MenuTable(
+  {
+    categories, loading, products, setProducts, onSuccess
+  }: Props) {
 
   const [showConfirm, setShowConfirm] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
@@ -77,6 +78,7 @@ export default function MenuTable({ categories, loading, products, setProducts, 
       toast.success("Product deleted successfully")
       setShowConfirm(false)
       setSelectedProductId(null)
+      onSuccess();
     } catch (err) {
       toast.error("Failed to delete product")
       console.error(err)
@@ -174,7 +176,7 @@ export default function MenuTable({ categories, loading, products, setProducts, 
         <SingleProductSidebar categories={categories}
           onClose={() => setOpenProductMenu(false)}
           product={editProduct}
-          fetchProducts={fetchProducts}
+          onSuccess={onSuccess}
         />
       )}
     </div>

@@ -28,7 +28,7 @@ interface Product {
 
 interface Props {
     onClose: () => void;
-    fetchProducts: () => void;
+    onSuccess: () => Promise<void>;
     categories: Category[];
     product?: Product;
 }
@@ -37,7 +37,7 @@ export default function SingleProductSidebar({
     onClose,
     categories,
     product,
-    fetchProducts,
+    onSuccess,
 }: Props) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -122,7 +122,7 @@ export default function SingleProductSidebar({
                 toast.success("Product added successfully!");
             }
 
-            fetchProducts();
+            onSuccess();
             onClose();
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to save product");

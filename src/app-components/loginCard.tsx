@@ -8,6 +8,8 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import { useEffect, useState } from "react";
+import Loader from "@/components/common/Loader";
 
 interface LoginForm {
   email: string;
@@ -15,6 +17,8 @@ interface LoginForm {
 }
 
 export const LoginCard = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
   const {
     register,
     handleSubmit,
@@ -24,6 +28,21 @@ export const LoginCard = () => {
   });
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        router.replace("/dashboard");
+      } else {
+        setIsLoading(false);
+      }
+    }
+  }, [router]);
+
+  if (isLoading) {
+    return <Loader />;
+  }
 
   const onSubmit = async (data: LoginForm) => {
     try {

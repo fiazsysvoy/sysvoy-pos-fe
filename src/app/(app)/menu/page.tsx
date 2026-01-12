@@ -138,7 +138,7 @@ export default function MenuPage() {
           products={products}
           setProducts={setProducts}
           loading={loadingProducts}
-          fetchProducts={fetchProducts}
+          onSuccess={async ()=>{ await fetchCategories(); await fetchProducts();}}
         />
       </div>
 
@@ -150,7 +150,9 @@ export default function MenuPage() {
             setSelectedCategory(undefined);
           }}
           category={selectedCategory}
-          onSuccess={fetchCategories}
+          onSuccess={()=>{
+            fetchCategories(); fetchProducts();
+          }}
         />
       )}
 
@@ -159,7 +161,10 @@ export default function MenuPage() {
         <SingleProductSidebar
           categories={categories}
           onClose={() => setOpenProductMenu(false)}
-          fetchProducts={fetchProducts}
+          onSuccess={async ()=>{
+            await fetchCategories();
+            await fetchProducts();
+          }}
         />
       )}
     </>

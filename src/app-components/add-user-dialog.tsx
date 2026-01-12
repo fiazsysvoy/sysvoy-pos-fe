@@ -54,7 +54,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch,s
         setUser((prev: any) => ({ ...prev, [id]: value }));
     }
     return (
-        <Dialog open={open}>
+        <Dialog open={open} onOpenChange={setOpen}>
             <form>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
