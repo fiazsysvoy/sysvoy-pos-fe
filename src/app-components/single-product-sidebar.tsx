@@ -1,36 +1,36 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
-import axios from "axios"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import api from "@/lib/axios"; // use your interceptor
 
 interface Category {
-    id: string
-    name: string
+    id: string;
+    name: string;
 }
 
 interface ProductImage {
-    publicId: string
-    url: string
+    publicId: string;
+    url: string;
 }
 
 interface Product {
-    id: string
-    name: string
-    description?: string
-    price: number
-    stock: number
-    categoryId: string
-    images?: ProductImage[]
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    stock: number;
+    categoryId: string;
+    images?: ProductImage[];
 }
 
 interface Props {
-    onClose: () => void
-    fetchProducts: () => void
-    categories: Category[]
-    product?: Product
+    onClose: () => void;
+    fetchProducts: () => void;
+    categories: Category[];
+    product?: Product;
 }
 
 export default function SingleProductSidebar({
@@ -39,113 +39,98 @@ export default function SingleProductSidebar({
     product,
     fetchProducts,
 }: Props) {
-    const [name, setName] = useState("")
-    const [description, setDescription] = useState("")
-    const [price, setPrice] = useState<number | "">("")
-    const [stock, setStock] = useState<number | "">("")
-    const [categoryId, setCategoryId] = useState("")
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [price, setPrice] = useState<number | "">("");
+    const [stock, setStock] = useState<number | "">("");
+    const [categoryId, setCategoryId] = useState("");
 
-    const [existingImages, setExistingImages] = useState<ProductImage[]>([])
-    const [newImages, setNewImages] = useState<File[]>([])
-    const [newPreviews, setNewPreviews] = useState<string[]>([])
+    const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
+    const [newImages, setNewImages] = useState<File[]>([]);
+    const [newPreviews, setNewPreviews] = useState<string[]>([]);
 
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false);
 
-    const isEdit = Boolean(product)
+    const isEdit = Boolean(product);
 
-    // Initialize form fields for edit
+    // Prefill for edit
     useEffect(() => {
-        if (!product) return
+        if (!product) return;
 
-        setName(product.name)
-        setDescription(product.description || "")
-        setPrice(product.price)
-        setStock(product.stock)
-        setCategoryId(product.categoryId)
+        setName(product.name);
+        setDescription(product.description || "");
+        setPrice(product.price);
+        setStock(product.stock);
+        setCategoryId(product.categoryId);
 
-        if (product.images?.length) {
-            setExistingImages(product.images)
-        }
-    }, [product])
+        if (product.images?.length) setExistingImages(product.images);
+    }, [product]);
 
     // Handle new image selection
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || [])
-        if (!files.length) return
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
 
-        setNewImages((prev) => [...prev, ...files])
+        setNewImages((prev) => [...prev, ...files]);
         setNewPreviews((prev) => [
             ...prev,
             ...files.map((file) => URL.createObjectURL(file)),
-        ])
+        ]);
 
-        e.target.value = ""
-    }
+        e.target.value = "";
+    };
 
-    // Remove old image
-    const removeExistingImage = (index: number) => {
-        setExistingImages((prev) => prev.filter((_, i) => i !== index))
-    }
+    const removeExistingImage = (index: number) =>
+        setExistingImages((prev) => prev.filter((_, i) => i !== index));
 
-    // Remove new image
     const removeNewImage = (index: number) => {
-        setNewImages((prev) => prev.filter((_, i) => i !== index))
-        setNewPreviews((prev) => prev.filter((_, i) => i !== index))
-    }
+        setNewImages((prev) => prev.filter((_, i) => i !== index));
+        setNewPreviews((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async () => {
         if (!name || !price || !stock || !categoryId) {
-            toast.error("Please fill all required fields")
-            return
+            toast.error("Please fill all required fields");
+            return;
         }
 
-        const formData = new FormData()
-        formData.append("name", name)
-        formData.append("description", description)
-        formData.append("price", String(price))
-        formData.append("stock", String(stock))
-        formData.append("categoryId", categoryId)
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("description", description);
+        formData.append("price", String(price));
+        formData.append("stock", String(stock));
+        formData.append("categoryId", categoryId);
 
-        // Append retained old images
-        formData.append("images", JSON.stringify(existingImages))
+        // Retained old images
+        formData.append("images", JSON.stringify(existingImages));
 
         // Append new images
-        newImages.forEach((file) => {
-            formData.append("prodImages", file)
-        })
+        newImages.forEach((file) => formData.append("prodImages", file));
 
         try {
-            setLoading(true)
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL
-            const token = localStorage.getItem("token")
+            setLoading(true);
 
             if (isEdit && product) {
-                await axios.patch(`${apiUrl}api/products/${product.id}`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "multipart/form-data",
-                    },
-                })
-                toast.success("Product updated successfully!")
+                await api.patch(`/api/products/${product.id}`, formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+                toast.success("Product updated successfully!");
             } else {
-                await axios.post(`${apiUrl}api/products`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "multipart/form-data",
-                    },
-                })
-                toast.success("Product added successfully!")
+                await api.post("/api/products", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+                toast.success("Product added successfully!");
             }
 
-            onClose()
-            fetchProducts()
-        } catch (err) {
-            toast.error("Failed to save product")
-            console.error(err)
+            fetchProducts();
+            onClose();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to save product");
+            console.error(err);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     return (
         <>
@@ -173,7 +158,6 @@ export default function SingleProductSidebar({
                         </label>
 
                         <div className="mt-2 flex flex-wrap gap-3">
-                            {/* Existing Images */}
                             {existingImages.map((img, i) => (
                                 <div key={img.publicId} className="relative">
                                     <img
@@ -190,7 +174,6 @@ export default function SingleProductSidebar({
                                 </div>
                             ))}
 
-                            {/* New Images */}
                             {newPreviews.map((src, i) => (
                                 <div key={i} className="relative">
                                     <img
@@ -282,9 +265,8 @@ export default function SingleProductSidebar({
                                 min={0}
                                 step={1}
                                 onChange={(e) => {
-                                    const value = e.target.value
-                                    if (value === "") return setStock(0)
-                                    setStock(Math.floor(Number(value)))
+                                    const value = e.target.value;
+                                    setStock(value === "" ? 0 : Math.floor(Number(value)));
                                 }}
                                 className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                             />
@@ -302,7 +284,7 @@ export default function SingleProductSidebar({
                             className="mt-1 w-full dark:bg-gray-800 dark:text-white rounded px-3 py-2"
                         >
                             <option value="">Select category</option>
-                            {categories.map((cat) => (
+                            {categories.filter(cat => cat.id !== "all").map((cat) => (
                                 <option key={cat.id} value={cat.id}>
                                     {cat.name}
                                 </option>
@@ -321,5 +303,5 @@ export default function SingleProductSidebar({
                 </Button>
             </div>
         </>
-    )
+    );
 }

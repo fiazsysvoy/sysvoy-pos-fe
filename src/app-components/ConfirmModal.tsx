@@ -35,23 +35,22 @@ export default function ConfirmModal({
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="bg-zinc-900 rounded-xl w-[360px] p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <p className="text-sm text-zinc-400">{description}</p>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl w-[360px] p-6 space-y-4">
+          <h2 className="text-lg font-semibold dark:text-white">{title}</h2>
+          <p className="text-sm dark:text-zinc-400">{description}</p>
 
           <div className="flex justify-end gap-3 pt-4">
             <Button
-            variant="outline"
-            onClick={onCancel}
-            disabled={loading}
-            className="
+              variant="outline"
+              onClick={onCancel}
+              disabled={loading}
+              className="
                 border-zinc-300 text-zinc-900
                 hover:bg-zinc-100
                 dark:border-zinc-700 dark:text-zinc-100
-                dark:hover:bg-zinc-800
-            "
+                dark:hover:bg-zinc-800"
             >
-                {cancelText}
+              {cancelText}
             </Button>
 
             <Button

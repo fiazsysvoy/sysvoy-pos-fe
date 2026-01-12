@@ -2,11 +2,11 @@
 
 import { Pencil, Trash2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
-import axios from "axios"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import ConfirmModal from "./ConfirmModal"
 import SingleProductSidebar from "./single-product-sidebar"
+import api from "@/lib/axios"
 
 interface ProductImage {
   publicId: string
@@ -41,7 +41,7 @@ interface Props {
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>
 }
 
-export default function MenuTable({ categories , loading, products,setProducts, fetchProducts}: Props) {
+export default function MenuTable({ categories, loading, products, setProducts, fetchProducts }: Props) {
   // const [products, setProducts] = useState<Product[]>([])
   // const [loading, setLoading] = useState(false)
 
@@ -56,32 +56,6 @@ export default function MenuTable({ categories , loading, products,setProducts, 
     setOpenProductMenu(true)
   }
 
-  //   const fetchProducts = async () => {
-  //     try {
-  //       setLoading(true)
-
-  //       const apiUrl = process.env.NEXT_PUBLIC_API_URL
-  //       const token = localStorage.getItem("token")
-
-  //       const res = await axios.get(`${apiUrl}api/products`, {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       })
-  //       console.log(res.data)
-  //       setProducts(res.data.data)
-  //     } catch (err) {
-  //       toast.error("Failed to fetch products")
-  //       console.error(err)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
-    
-  // useEffect(() => {
-  //   fetchProducts()
-  // }, [])
-
   const deleteProduct = async () => {
     if (!selectedProductId) return
 
@@ -90,7 +64,7 @@ export default function MenuTable({ categories , loading, products,setProducts, 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL
       const token = localStorage.getItem("token")
 
-      await axios.delete(`${apiUrl}api/products/${selectedProductId}`, {
+      await api.delete(`/api/products/${selectedProductId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -198,9 +172,9 @@ export default function MenuTable({ categories , loading, products,setProducts, 
       )}
       {openProductMenu && editProduct && (
         <SingleProductSidebar categories={categories}
-         onClose={() => setOpenProductMenu(false)} 
-         product={editProduct}
-         fetchProducts={fetchProducts}
+          onClose={() => setOpenProductMenu(false)}
+          product={editProduct}
+          fetchProducts={fetchProducts}
         />
       )}
     </div>

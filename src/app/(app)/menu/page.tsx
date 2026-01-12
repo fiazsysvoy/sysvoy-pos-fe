@@ -1,26 +1,25 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import CategoryCards from "@/app-components/category-cards"
-import MenuTabs from "@/app-components/menu-tabs"
-import MenuTable from "@/app-components/menu-table"
-import SingleProductSidebar from "@/app-components/single-product-sidebar"
-import { toast } from "sonner"
-import axios from "axios"
-import CategorySidebar from "@/app-components/category-sidebar"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import CategoryCards from "@/app-components/category-cards";
+import MenuTable from "@/app-components/menu-table";
+import SingleProductSidebar from "@/app-components/single-product-sidebar";
+import { toast } from "sonner";
+import api from "@/lib/axios";
+import CategorySidebar from "@/app-components/category-sidebar";
 
 interface Product {
-  id: string
-  name: string
-  description?: string
-  images: { publicId: string; url: string }[]
-  stock: number
-  categoryId: string
-  category?: { id: string; name: string }
-  price: number
-  available: boolean
+  id: string;
+  name: string;
+  description?: string;
+  images: { publicId: string; url: string }[];
+  stock: number;
+  categoryId: string;
+  category?: { id: string; name: string };
+  price: number;
+  available: boolean;
 }
 
 interface Category {
@@ -37,44 +36,29 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
+  // Fetch products
   const fetchProducts = async () => {
     try {
-      setLoadingCategories(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      const res = await axios.get(`${apiUrl}api/products`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setProducts(res.data.data)
-    } catch (err) {
-      toast.error("Failed to fetch products")
-      console.error(err)
+      setLoadingProducts(true);
+      const res = await api.get("/api/products");
+      setProducts(res.data.data);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to fetch products");
+      console.error(err);
     } finally {
-      setLoadingCategories(false)
+      setLoadingProducts(false);
     }
-  }
-
-  const handleCategorySelect = (category: Category) => {
-    setSelectedCategory(category);
-    setOpenCategorySidebar(true);
   };
 
+  // Fetch categories
   const fetchCategories = async () => {
-    setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const token = localStorage.getItem("token");
-
     try {
-      const res = await axios.get(`${apiUrl}api/categories`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      setLoadingCategories(true);
+      const res = await api.get("/api/categories");
 
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
@@ -84,7 +68,7 @@ export default function MenuPage() {
         imageUrl: cat.imageUrl || "",
       }));
 
-      const totalItems = res.data.meta.total;
+      const totalItems = res.data.meta?.total || 0;
 
       const allCategory: Category = {
         id: "all",
@@ -96,8 +80,14 @@ export default function MenuPage() {
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to fetch categories");
     } finally {
-      setLoading(false);
+      setLoadingCategories(false);
     }
+  };
+
+  // When a category is clicked
+  const handleCategorySelect = (category: Category) => {
+    setSelectedCategory(category);
+    setOpenCategorySidebar(true);
   };
 
   useEffect(() => {
@@ -110,7 +100,9 @@ export default function MenuPage() {
       <div className="p-6 space-y-6 text-white">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-black dark:text-white">Categories</div>
+          <div className="text-xl font-semibold text-black dark:text-white">
+            Categories
+          </div>
           <Button
             className="bg-pink-300 text-black hover:bg-pink-400"
             onClick={() => setOpenCategorySidebar(true)}
@@ -120,30 +112,37 @@ export default function MenuPage() {
         </div>
 
         <div className="text-black overflow-auto max-w-full">
-          <CategoryCards onSelect={handleCategorySelect}
-            categories={categories} loading={loading} />
+          <CategoryCards
+            onSelect={handleCategorySelect}
+            categories={categories}
+            loading={loadingCategories}
+          />
         </div>
         <Separator className="bg-white/10" />
 
-        {/* Menu Section */}
+        {/* Products Section */}
         <div className="flex items-center justify-between">
-          <div className="text-xl font-semibold text-black dark:text-white">Products</div>
-          <Button className="bg-pink-300 text-black hover:bg-pink-400"
-            onClick={() => setOpenProductMenu(true)}>
+          <div className="text-xl font-semibold text-black dark:text-white">
+            Products
+          </div>
+          <Button
+            className="bg-pink-300 text-black hover:bg-pink-400"
+            onClick={() => setOpenProductMenu(true)}
+          >
             Add Menu Item
           </Button>
         </div>
 
-        {/* <MenuTabs /> */}
         <MenuTable
           categories={categories}
           products={products}
           setProducts={setProducts}
-          loading={loadingCategories}
-          fetchProducts={fetchProducts} />
+          loading={loadingProducts}
+          fetchProducts={fetchProducts}
+        />
       </div>
 
-      {/* Sidebar for adding/editing category*/}
+      {/* Category Sidebar */}
       {openCategorySidebar && (
         <CategorySidebar
           onClose={() => {
@@ -155,10 +154,14 @@ export default function MenuPage() {
         />
       )}
 
-      {/* sidebar for adding product */}
+      {/* Product Sidebar */}
       {openProductMenu && (
-        <SingleProductSidebar categories={categories} onClose={() => setOpenProductMenu(false)} fetchProducts={fetchProducts} />
+        <SingleProductSidebar
+          categories={categories}
+          onClose={() => setOpenProductMenu(false)}
+          fetchProducts={fetchProducts}
+        />
       )}
     </>
-  )
+  );
 }

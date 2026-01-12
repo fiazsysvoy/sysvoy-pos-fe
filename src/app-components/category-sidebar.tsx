@@ -1,147 +1,115 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
-import axios from "axios"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import api from "@/lib/axios";
+import ConfirmModal from "./ConfirmModal";
 
 interface Category {
-    id: string
-    name: string
-    description?: string
-    imageUrl?: string
+    id: string;
+    name: string;
+    description?: string;
+    imageUrl?: string;
 }
 
 export default function CategorySidebar({
     onClose,
     onSuccess,
-    category, // optional for edit
+    category,
 }: {
-    onClose: () => void
-    onSuccess: () => void
-    category?: Category
+    onClose: () => void;
+    onSuccess: () => void;
+    category?: Category;
 }) {
-    const isEdit = !!category
+    const isEdit = !!category;
 
-    const [categoryName, setCategoryName] = useState("")
-    const [description, setDescription] = useState("")
-    const [imageFile, setImageFile] = useState<File | null>(null)
-    const [preview, setPreview] = useState<string | null>(null)
-    const [loading, setLoading] = useState(false)
+    const [categoryName, setCategoryName] = useState("");
+    const [description, setDescription] = useState("");
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
 
-    /* ------------------ Prefill for edit ------------------ */
+    // Prefill for edit
     useEffect(() => {
         if (category) {
-            setCategoryName(category.name)
-            setDescription(category.description || "")
-            setPreview(category.imageUrl || null)
+            setCategoryName(category.name);
+            setDescription(category.description || "");
+            setPreview(category.imageUrl || null);
         }
-    }, [category])
+    }, [category]);
 
-    /* ------------------ Image handler ------------------ */
+    // Image handler/edit image
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
+        const file = e.target.files?.[0];
         if (!file || !file.type.startsWith("image/")) {
-            toast.error("Please select a valid image")
-            return
+            toast.error("Please select a valid image");
+            return;
         }
-        setImageFile(file)
-        setPreview(URL.createObjectURL(file))
-    }
+        setImageFile(file);
+        setPreview(URL.createObjectURL(file));
+    };
 
+    // Delete category
     const handleDelete = async () => {
-        if (!isEdit || !category) return
+        if (!isEdit || !category) return;
 
         try {
-            setLoading(true)
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL
-            const token = localStorage.getItem("token")
-
-            await axios.delete(`${apiUrl}api/categories/${category.id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            })
-            toast.success("Category deleted!")
-            onSuccess()
-            onClose()
+            setDeleting(true);
+            await api.delete(`/api/categories/${category.id}`);
+            toast.success("Category deleted!");
+            onSuccess();
+            onClose();
         } catch (err: unknown) {
-            let message = "Failed to delete category"
-
-            if (axios.isAxiosError(err)) {
-                message = err.response?.data?.message || message
-            }
-
-            toast.error(message)
+            toast.error(
+                (err as any)?.response?.data?.message || "Failed to delete category"
+            );
         } finally {
-            setLoading(false)
+            setDeleting(false);
         }
-    }
+    };
 
-    /* ------------------ Submit ------------------ */
+    // Submit category (add/update)
     const handleSubmit = async () => {
         if (!categoryName) {
-            toast.error("Category name is required")
-            return
+            toast.error("Category name is required");
+            return;
         }
-
         if (!isEdit && !imageFile) {
-            toast.error("Image is required")
-            return
+            toast.error("Image is required");
+            return;
         }
 
-        const formData = new FormData()
-        formData.append("name", categoryName)
-        formData.append("description", description || "")
-        if (imageFile) {
-            // only append if new image is selected (old will be removed from backend)
-            formData.append("image", imageFile) 
-        }
+        const formData = new FormData();
+        formData.append("name", categoryName);
+        formData.append("description", description || "");
+        if (imageFile) formData.append("image", imageFile);
 
         try {
-            setLoading(true)
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL
-            const token = localStorage.getItem("token")
+            setSaving(true);
 
             if (isEdit) {
-                await axios.patch(
-                    `${apiUrl}api/categories/${category!.id}`,
-                    formData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
-                )
-                toast.success("Category updated!")
+                await api.patch(`/api/categories/${category!.id}`, formData);
+                toast.success("Category updated!");
             } else {
-                await axios.post(`${apiUrl}api/categories`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                toast.success("Category added!")
+                await api.post(`/api/categories`, formData);
+                toast.success("Category added!");
             }
 
-            onSuccess()
-            onClose()
+            onSuccess();
+            onClose();
         } catch (err: unknown) {
-            let message = isEdit
-                ? "Failed to update category"
-                : "Failed to add category"
-
-            if (axios.isAxiosError(err)) {
-                message = err.response?.data?.message || message
-            }
-
-            toast.error(message)
+            toast.error(
+                (err as any)?.response?.data?.message ||
+                (isEdit ? "Failed to update category" : "Failed to add category")
+            );
         } finally {
-            setLoading(false)
+            setSaving(false);
         }
-    }
+    };
 
     return (
         <>
@@ -184,11 +152,7 @@ export default function CategorySidebar({
                                 onChange={handleImageChange}
                                 className="hidden"
                             />
-
-                            <label
-                                htmlFor="category-icon"
-                                className="cursor-pointer text-pink-500"
-                            >
+                            <label htmlFor="category-icon" className="cursor-pointer text-pink-500">
                                 {imageFile || preview ? "Change Icon" : "Select Icon"}
                             </label>
                         </div>
@@ -216,27 +180,40 @@ export default function CategorySidebar({
                     </div>
                 </div>
 
-                {isEdit && <Button
-                    className="bg-red-500 mt-4 hover:bg-red-600"
-                    onClick={handleDelete}
-                    disabled={loading}
-                >
-                    Delete
-                </Button>}
+                {isEdit && (
+                    <Button
+                        className="bg-red-500 mt-4 hover:bg-red-600"
+                        // onClick={handleDelete}
+                        onClick={() => setConfirmOpen(true)}
+                        disabled={deleting || saving}
+                    >
+                        Delete
+                    </Button>
+                )}
 
-                {/* Footer */}
                 <Button
                     className="bg-pink-500 mt-4 hover:bg-pink-600"
                     onClick={handleSubmit}
-                    disabled={loading}
+                    disabled={deleting || saving}
                 >
-                    {loading
+                    {saving
                         ? "Saving..."
                         : isEdit
                             ? "Update Category"
                             : "Add Category"}
                 </Button>
+                <ConfirmModal
+                    open={confirmOpen}
+                    title="Delete Category?"
+                    description="Deleting this category will also delete all its products. This action cannot be undone."
+                    loading={deleting}
+                    onCancel={() => setConfirmOpen(false)}
+                    onConfirm={async () => {
+                        setConfirmOpen(false);
+                        await handleDelete();
+                    }}
+                />
             </div>
         </>
-    )
+    );
 }
