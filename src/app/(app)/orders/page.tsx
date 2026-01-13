@@ -79,11 +79,9 @@ export default function OrdersPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
     
     const dayName = days[date.getDay()]
     const day = date.getDate()
-    const month = months[date.getMonth()]
     const year = date.getFullYear()
     
     const hours = date.getHours()
@@ -111,9 +109,9 @@ export default function OrdersPage() {
     } else if (diffHours > 2) {
       return { status: "Ready", color: "bg-green-500", icon: CheckCircle2, subStatus: "Ready to serve" }
     } else if (diffHours > 1) {
-      return { status: "In Process", color: "bg-yellow-500", icon: Clock, subStatus: "Cooking Now" }
+      return { status: "In Process", color: "bg-[#FFEBDE]", icon: Clock, subStatus: "Cooking Now" }
     } else {
-      return { status: "In Process", color: "bg-pink-500", icon: Clock, subStatus: "In the Kitchen" }
+      return { status: "In Process", color: "bg-[#FFEBDE]", icon: Clock, subStatus: "In the Kitchen" }
     }
   }
 
@@ -190,7 +188,7 @@ export default function OrdersPage() {
               variant="ghost"
               className={`${
                 selectedFilter === "all"
-                  ? "bg-pink-500 text-white hover:bg-pink-600"
+                  ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
                   : "text-gray-400 hover:text-white hover:bg-gray-700"
               }`}
               onClick={() => setSelectedFilter("all")}
@@ -201,7 +199,7 @@ export default function OrdersPage() {
               variant="ghost"
               className={`${
                 selectedFilter === "in_process"
-                  ? "bg-pink-500 text-white hover:bg-pink-600"
+                  ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
                   : "text-gray-400 hover:text-white hover:bg-gray-700"
               }`}
               onClick={() => setSelectedFilter("in_process")}
@@ -212,7 +210,7 @@ export default function OrdersPage() {
               variant="ghost"
               className={`${
                 selectedFilter === "completed"
-                  ? "bg-pink-500 text-white hover:bg-pink-600"
+                  ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
                   : "text-gray-400 hover:text-white hover:bg-gray-700"
               }`}
               onClick={() => setSelectedFilter("completed")}
@@ -223,7 +221,7 @@ export default function OrdersPage() {
               variant="ghost"
               className={`${
                 selectedFilter === "cancelled"
-                  ? "bg-pink-500 text-white hover:bg-pink-600"
+                  ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
                   : "text-gray-400 hover:text-white hover:bg-gray-700"
               }`}
               onClick={() => setSelectedFilter("cancelled")}
@@ -234,7 +232,7 @@ export default function OrdersPage() {
 
           <div className="flex items-center gap-4">
             <Button
-              className="bg-pink-500 hover:bg-pink-600 text-white"
+              className="bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black"
               onClick={() => router.push("/orders/new")}
             >
               Add New Order
@@ -257,79 +255,102 @@ export default function OrdersPage() {
             <p className="text-gray-400">Loading orders...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-6 overflow-y-auto flex-1 pr-2">
+          <div className="grid grid-cols-3 gap-6 overflow-y-auto flex-1 pr-2 auto-rows-min">
             {filteredOrders.map((order, index) => {
               const { date, time } = formatDate(order.createdAt)
               const orderStatus = getOrderStatus(order)
               const StatusIcon = orderStatus.icon
 
+              // Determine status colors based on status type
+              let statusBgColor = "bg-green-500"
+              let statusDotColor = "bg-green-500"
+              let statusTextColor = "text-white"
+              if (orderStatus.status === "Completed") {
+                statusBgColor = "bg-blue-500"
+                statusDotColor = "bg-blue-500"
+                statusTextColor = "text-white"
+              } else if (orderStatus.status === "In Process") {
+                statusBgColor = "bg-[#FFEBDE]"
+                statusTextColor = "text-black"
+                if (orderStatus.subStatus === "Cooking Now") {
+                  statusDotColor = "bg-yellow-500"
+                } else {
+                  statusDotColor = "bg-red-500"
+                }
+              }
+
               return (
-                <Card key={order.id} className="bg-[#2a2e32] border-gray-700 p-6">
+                <Card key={order.id} className="bg-[#2a2e32] border-gray-700 p-6 flex flex-col h-auto w-full">
+                  {/* Header with Order Number and Customer Info */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="bg-pink-500 text-white font-bold text-xl px-4 py-2 rounded">
+                    <div className="flex items-center gap-4 flex-1">
+                      {/* Pink Order Number Badge */}
+                      <div className="bg-[#FAC1D9] text-black text-2xl w-12 h-12 flex items-center justify-center rounded flex-shrink-0">
                         {String(index + 1).padStart(2, "0")}
                       </div>
-                      <div>
-                        <p className="font-semibold text-lg">
-                          {order.createdBy?.name || order.createdBy?.email || "Guest Customer"}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                          {order.createdBy?.name || order.createdBy?.email || "Watson Joyce"}
                         </p>
-                        <p className="text-sm text-gray-400">Order # {order.id.slice(0, 8)}</p>
+                        <p className="text-sm text-gray-400">Order # {order.id.slice(-3).padStart(3, "0")}</p>
                       </div>
+                    </div>
+                    {/* Status Badge Top Right */}
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md ${statusBgColor} ${statusTextColor} text-xs  mb-1`}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        {orderStatus.status}
+                      </div>
+                      {orderStatus.subStatus && (
+                        <div className="flex items-center gap-1.5">
+                          <div className={`h-2 w-2 rounded-full ${statusDotColor}`}></div>
+                          <span className="text-xs text-gray-400">{orderStatus.subStatus}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
+                  {/* Date and Time */}
                   <div className="mb-4">
                     <p className="text-sm text-gray-400">{date}</p>
                     <p className="text-sm text-gray-400">{time}</p>
                   </div>
 
-                  {/* Order Items */}
-                  <div className="mb-4 space-y-2">
-                    <div className="grid grid-cols-3 gap-2 text-sm text-gray-400 mb-2">
+                  {/* Order Items Table */}
+                  <div className="mb-4 flex-1">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-2 pb-1 border-b border-gray-700">
                       <span>Qty</span>
                       <span>Items</span>
                       <span className="text-right">Price</span>
                     </div>
-                    {order.items.slice(0, 4).map((item, idx) => (
-                      <div key={item.id} className="grid grid-cols-3 gap-2 text-sm">
-                        <span className="text-gray-300">{String(item.quantity).padStart(2, "0")}</span>
-                        <span className="text-gray-300">{item.product.name}</span>
-                        <span className="text-right font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                    {order.items.length > 4 && (
-                      <p className="text-xs text-gray-500">+{order.items.length - 4} more items</p>
-                    )}
+                    <div className="space-y-1.5 mt-2">
+                      {order.items.slice(0, 4).map((item) => (
+                        <div key={item.id} className="grid grid-cols-3 gap-2 text-sm">
+                          <span className="text-gray-300">{String(item.quantity).padStart(2, "0")}</span>
+                          <span className="text-gray-300 text-sm">{item.product.name}</span>
+                          <span className="text-right font-semibold text-gray-300">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                      {order.items.length > 4 && (
+                        <p className="text-xs text-gray-500 mt-2">+{order.items.length - 4} more items</p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mb-4">
+                  {/* SubTotal */}
+                  <div className="mb-4 pt-2 border-t border-gray-700">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400">SubTotal</span>
-                      <span className="font-semibold">${order.totalAmount.toFixed(2)}</span>
+                      <span className="text-gray-400 text-sm">SubTotal</span>
+                      <span className="font-semibold text-base">${order.totalAmount.toFixed(2)}</span>
                     </div>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="mb-4">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded ${orderStatus.color} text-white text-sm font-semibold mb-2`}>
-                      <StatusIcon className="h-4 w-4" />
-                      {orderStatus.status}
-                    </div>
-                    {orderStatus.subStatus && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className={`h-2 w-2 rounded-full ${orderStatus.color.replace("bg-", "bg-")}`}></div>
-                        <span className="text-sm text-gray-400">{orderStatus.subStatus}</span>
-                      </div>
-                    )}
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mt-auto">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 text-white hover:bg-gray-700"
+                      className="h-10 w-10 bg-[#33373b] border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-gray-600 flex-shrink-0"
                       onClick={() => router.push(`/orders/edit/${order.id}`)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -337,12 +358,12 @@ export default function OrdersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 text-white hover:bg-gray-700"
+                      className="h-10 w-10 bg-[#33373b] border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-gray-600 flex-shrink-0 "
                       onClick={() => handleDeleteOrder(order.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4"/>
                     </Button>
-                    <Button className="flex-1 bg-pink-500 hover:bg-pink-600 text-white">
+                    <Button className="flex-1 bg-[#FAC1D9] hover:bg-pink-600 text-black  h-10">
                       Pay Bill
                     </Button>
                   </div>

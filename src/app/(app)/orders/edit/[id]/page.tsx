@@ -239,34 +239,36 @@ export default function EditOrderPage() {
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-4 gap-4 mb-6 overflow-x-auto">
+        <div className="flex flex-wrap mb-6" style={{ gap: '24px' }}>
           {loading ? (
             <p className="text-gray-400">Loading categories...</p>
           ) : (
             categories.map((category) => (
               <Card
                 key={category.id}
-                className={`bg-[#2a2e32] border-gray-700 cursor-pointer hover:bg-[#33373b] transition-colors ${
-                  selectedCategory === category.id ? "ring-2 ring-pink-500" : ""
+                className={`bg-[#2a2e32] border-0 cursor-pointer hover:bg-[#33373b] transition-colors w-[170px] h-[170px] flex flex-col ${
+                  selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
                 }`}
                 onClick={() => setSelectedCategory(category.id)}
               >
-                <div className="p-6 flex flex-col items-center justify-center">
-                  <div className="mb-3 p-3 rounded-full bg-pink-500/20">
+                <div className="p-4 flex flex-col items-center justify-center h-full">
+                  <div className="mb-3 p-3 rounded-full bg-[#FAC1D9]/20 flex-shrink-0">
                     {category.imageUrl ? (
                       <img
                         src={category.imageUrl}
                         alt={category.name}
-                        className="h-8 w-8 object-cover rounded"
+                        className="h-10 w-10 object-cover rounded"
                       />
                     ) : (
-                      <div className="h-8 w-8 bg-pink-400 rounded" />
+                      <div className="h-10 w-10 bg-[#FAC1D9] rounded" />
                     )}
                   </div>
-                  <h3 className="text-lg font-semibold mb-1">{category.name}</h3>
-                  <p className="text-sm text-gray-400">
-                    {products.filter((p) => p.categoryId === category.id).length} items
-                  </p>
+                  <div className="flex-1 flex flex-col justify-end w-full">
+                    <h3 className="text-sm font-semibold mb-0.5 text-white text-left w-full">{category.name}</h3>
+                    <p className="text-xs text-gray-400 text-left w-full">
+                      {products.filter((p) => p.categoryId === category.id).length} items
+                    </p>
+                  </div>
                 </div>
               </Card>
             ))
@@ -274,47 +276,43 @@ export default function EditOrderPage() {
         </div>
 
         {/* Product Items Grid */}
-        <div className="grid grid-cols-4 gap-4 overflow-y-auto flex-1">
+        <div className="flex flex-wrap overflow-y-auto flex-1" style={{ gap: '24px' }}>
           {loadingProducts ? (
             <p className="text-gray-400">Loading products...</p>
           ) : (
             filteredProducts.map((product) => {
               const quantity = quantities[product.id] || 1
               return (
-                <Card key={product.id} className="bg-[#2a2e32] border-gray-700">
-                  <div className="p-4">
-                    <div className="text-xs text-pink-400 mb-2">Order → Kitchen</div>
-                    <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                    <p className="text-xl font-bold text-pink-400 mb-4">
-                      ${product.price.toFixed(2)}
-                    </p>
-                    <div className="flex items-center justify-between mb-2">
+                <Card key={product.id} className="bg-[#2a2e32] border-0 w-[170px] h-[170px] flex flex-col overflow-hidden">
+                  <div className="p-3 flex flex-col h-full justify-between">
+                    <div className="flex-1">
+                      <div className="text-[10px] text-[#FAC1D9] mb-1.5">Order → Kitchen</div>
+                      <h3 className="text-sm font-semibold mb-1.5 text-white line-clamp-2 leading-tight">{product.name}</h3>
+                      <p className="text-base font-bold text-[#FAC1D9]">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-pink-400 hover:bg-pink-500/20"
+                        className="h-7 w-7 text-[#FAC1D9] hover:bg-[#FAC1D9]/20 flex-shrink-0 rounded-full"
                         onClick={() => updateQuantity(product.id, -1)}
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3.5 w-3.5" />
                       </Button>
-                      <span className="text-pink-400 font-semibold">
+                      <span className="text-[#FAC1D9] font-semibold text-sm">
                         {String(quantity).padStart(2, "0")}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-pink-400 hover:bg-pink-500/20"
+                        className="h-7 w-7 text-[#FAC1D9] hover:bg-[#FAC1D9]/20 flex-shrink-0 rounded-full bg-[#FAC1D9]/10"
                         onClick={() => updateQuantity(product.id, 1)}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <Button
-                      className="w-full bg-pink-500 hover:bg-pink-600 text-white mt-2"
-                      onClick={() => addToCart(product)}
-                    >
-                      Add to Cart
-                    </Button>
                   </div>
                 </Card>
               )
@@ -362,7 +360,7 @@ export default function EditOrderPage() {
             {cart.map((item, index) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="bg-pink-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">
+                  <span className="bg-[#FAC1D9] text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-semibold">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
@@ -421,7 +419,7 @@ export default function EditOrderPage() {
         {/* Update Order Button */}
         <div className="p-6 border-t border-gray-700">
           <Button
-            className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-6 text-lg"
+            className="w-full bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black font-semibold py-6 text-lg"
             onClick={handleUpdateOrder}
           >
             Update Order
