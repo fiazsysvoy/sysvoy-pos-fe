@@ -222,7 +222,7 @@ export default function EditOrderPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-[#1f2326] text-white">
+    <div className="flex h-[calc(100vh-4rem)] bg-background text-foreground">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
         {/* Header */}
@@ -230,7 +230,7 @@ export default function EditOrderPage() {
           <Button
             variant="ghost"
             size="icon"
-            className="text-white hover:bg-gray-700"
+            className="text-foreground hover:bg-accent"
             onClick={() => router.push("/orders")}
           >
             <ChevronLeft className="h-5 w-5" />
@@ -241,12 +241,12 @@ export default function EditOrderPage() {
         {/* Categories Grid */}
         <div className="grid grid-cols-4 gap-6 mb-6">
           {loading ? (
-            <p className="text-gray-400">Loading categories...</p>
+            <p className="text-muted-foreground">Loading categories...</p>
           ) : (
             categories.map((category) => (
               <Card
                 key={category.id}
-                className={`bg-[#2a2e32] border-0 cursor-pointer hover:bg-[#33373b] transition-colors h-[170px] flex flex-col ${
+                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${
                   selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
                 }`}
                 onClick={() => setSelectedCategory(category.id)}
@@ -264,8 +264,8 @@ export default function EditOrderPage() {
                     )}
                   </div>
                   <div className="flex-1 flex flex-col justify-end w-full">
-                    <h3 className="text-sm font-semibold mb-0.5 text-white text-left w-full">{category.name}</h3>
-                    <p className="text-xs text-gray-400 text-left w-full">
+                    <h3 className="text-sm font-semibold mb-0.5 text-card-foreground text-left w-full">{category.name}</h3>
+                    <p className="text-xs text-muted-foreground text-left w-full">
                       {products.filter((p) => p.categoryId === category.id).length} items
                     </p>
                   </div>
@@ -278,17 +278,17 @@ export default function EditOrderPage() {
         {/* Product Items Grid */}
         <div className="grid grid-cols-4 gap-6 overflow-y-auto flex-1">
           {loadingProducts ? (
-            <p className="text-gray-400">Loading products...</p>
+            <p className="text-muted-foreground">Loading products...</p>
           ) : (
             filteredProducts.map((product) => {
               const quantity = quantities[product.id] || 1
               return (
-                <Card key={product.id} className="bg-[#2a2e32] border-0 h-[170px] flex flex-col overflow-hidden">
+                <Card key={product.id} className="bg-card border-0 h-[170px] flex flex-col overflow-hidden">
                   <div className="p-3 flex flex-col h-full justify-between">
                     <div className="flex-1">
-                      <div className="text-[10px] text-[#FAC1D9] mb-1.5">Order → Kitchen</div>
-                      <h3 className="text-sm font-semibold mb-1.5 text-white line-clamp-2 leading-tight">{product.name}</h3>
-                      <p className="text-base font-bold text-[#FAC1D9]">
+                      <div className="text-[10px] text-card-foreground mb-1.5">Order → Kitchen</div>
+                      <h3 className="text-sm font-semibold mb-1.5 text-card-foreground line-clamp-2 leading-tight">{product.name}</h3>
+                      <p className="text-base font-bold text-card-foreground">
                         ${product.price.toFixed(2)}
                       </p>
                     </div>
@@ -296,18 +296,18 @@ export default function EditOrderPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-[#FAC1D9] hover:bg-[#FAC1D9]/20 flex-shrink-0 rounded-full"
+                        className="h-7 w-7 text-card-foreground hover:bg-accent flex-shrink-0 rounded-full"
                         onClick={() => updateQuantity(product.id, -1)}
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </Button>
-                      <span className="text-[#FAC1D9] font-semibold text-sm">
+                      <span className="text-card-foreground font-semibold text-sm">
                         {String(quantity).padStart(2, "0")}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-[#FAC1D9] hover:bg-[#FAC1D9]/20 flex-shrink-0 rounded-full bg-[#FAC1D9]/10"
+                        className="h-7 w-7 text-card-foreground hover:bg-accent flex-shrink-0 rounded-full bg-accent/50"
                         onClick={() => updateQuantity(product.id, 1)}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -322,14 +322,14 @@ export default function EditOrderPage() {
       </div>
 
       {/* Right Sidebar - Order Summary */}
-      <div className="w-96 bg-[#2a2e32] border-l border-gray-700 flex flex-col h-full">
-        <div className="p-6 border-b border-gray-700">
+      <div className="w-96 bg-card border-l border-border flex flex-col h-full">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold">Table {tableNumber}</h2>
+            <h2 className="text-2xl font-bold text-card-foreground">Table {tableNumber}</h2>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-white hover:bg-gray-700"
+              className="h-8 w-8 text-card-foreground hover:bg-accent"
               onClick={() => {
                 const newTable = prompt("Enter table number:", tableNumber)
                 if (newTable) setTableNumber(newTable)
@@ -339,11 +339,11 @@ export default function EditOrderPage() {
             </Button>
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-gray-400">{customerName}</p>
+            <p className="text-muted-foreground">{customerName}</p>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-white hover:bg-gray-700"
+              className="h-6 w-6 text-card-foreground hover:bg-accent"
               onClick={() => {
                 const newName = prompt("Enter customer name:", customerName)
                 if (newName) setCustomerName(newName)
@@ -364,17 +364,17 @@ export default function EditOrderPage() {
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-card-foreground">
                       {item.name} x {item.quantity}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-semibold text-card-foreground">${(item.price * item.quantity).toFixed(2)}</p>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-white hover:bg-gray-700"
+                    className="h-6 w-6 text-card-foreground hover:bg-accent"
                     onClick={() => removeFromCart(item.productId)}
                   >
                     <Minus className="h-3 w-3" />
@@ -383,41 +383,41 @@ export default function EditOrderPage() {
               </div>
             ))}
             {cart.length === 0 && (
-              <p className="text-gray-400 text-center py-8">No items in cart</p>
+              <p className="text-muted-foreground text-center py-8">No items in cart</p>
             )}
           </div>
         </div>
 
         {/* Bill Summary */}
-        <div className="p-6 border-t border-gray-700 space-y-3">
+        <div className="p-6 border-t border-border space-y-3">
           <div className="flex justify-between">
-            <span className="text-gray-400">Subtotal</span>
-            <span className="font-semibold">${subtotal.toFixed(2)}</span>
+            <span className="text-muted-foreground">Subtotal</span>
+            <span className="font-semibold text-card-foreground">${subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-400">Tax 5%</span>
-            <span className="font-semibold">${tax.toFixed(2)}</span>
+            <span className="text-muted-foreground">Tax 5%</span>
+            <span className="font-semibold text-card-foreground">${tax.toFixed(2)}</span>
           </div>
-          <div className="border-t border-dashed border-gray-600 my-3"></div>
+          <div className="border-t border-dashed border-border my-3"></div>
           <div className="flex justify-between text-xl">
-            <span className="font-bold">Total</span>
-            <span className="font-bold">${total.toFixed(2)}</span>
+            <span className="font-bold text-card-foreground">Total</span>
+            <span className="font-bold text-card-foreground">${total.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Payment Method */}
-        <div className="p-6 border-t border-gray-700">
-          <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
-          <div className="flex flex-col items-center justify-center bg-white p-6 rounded-lg mb-4">
-            <div className="h-32 w-32 bg-gray-200 rounded-lg flex items-center justify-center mb-2">
-              <ScanLine className="h-16 w-16 text-gray-600" />
+        <div className="p-6 border-t border-border">
+          <h3 className="text-lg font-semibold mb-4 text-card-foreground">Payment Method</h3>
+          <div className="flex flex-col items-center justify-center bg-background p-6 rounded-lg mb-4 border border-border">
+            <div className="h-32 w-32 bg-muted rounded-lg flex items-center justify-center mb-2">
+              <ScanLine className="h-16 w-16 text-muted-foreground" />
             </div>
-            <p className="text-gray-800 mt-2 font-semibold">Scan QR Code</p>
+            <p className="text-foreground mt-2 font-semibold">Scan QR Code</p>
           </div>
         </div>
 
         {/* Update Order Button */}
-        <div className="p-6 border-t border-gray-700">
+        <div className="p-6 border-t border-border">
           <Button
             className="w-full bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black font-semibold py-6 text-lg"
             onClick={handleUpdateOrder}

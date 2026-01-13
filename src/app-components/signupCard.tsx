@@ -7,28 +7,31 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import api from "@/lib/axios";
 import { useEffect, useState } from "react";
 import Loader from "@/components/common/Loader";
 import Link from "next/link";
 
-interface LoginForm {
+interface SignupForm {
+  name: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
-export const LoginCard = () => {
+export const SignupCard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
+  } = useForm<SignupForm>({
     mode: "onChange",
   });
 
   const router = useRouter();
+  const password = watch("password");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -45,20 +48,19 @@ export const LoginCard = () => {
     return <Loader />;
   }
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: SignupForm) => {
     try {
-      const res = await api.post("/api/auth/signin", {
+      // This is just UI - no actual API call
+      toast.success("Signup form submitted successfully!");
+      console.log("Signup data:", {
+        name: data.name,
         email: data.email,
         password: data.password,
       });
-
-      if (res.data?.token) {
-        localStorage.setItem("token", res.data.token);
-        toast.success("Login successful!");
-        router.push("/dashboard");
-      }
+      // In a real app, you would call your signup API here
+      // await api.post("/api/auth/signup", { ... });
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid login credentials");
+      toast.error(err.response?.data?.message || "Signup failed");
       console.error(err);
     }
   };
@@ -67,15 +69,32 @@ export const LoginCard = () => {
     <div className="flex items-center justify-center w-full">
       <Card className="w-1/4">
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>Create an account</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your information below to create your account
           </CardDescription>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col gap-6">
+              {/* Name */}
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  {...register("name", {
+                    required: "Name is required",
+                    minLength: { value: 2, message: "Name must be at least 2 characters" },
+                  })}
+                />
+                {errors.name && (
+                  <span className="text-red-500 text-sm">{errors.name.message}</span>
+                )}
+              </div>
+
               {/* Email */}
               <div className="flex flex-col gap-1">
                 <Label htmlFor="email">Email</Label>
@@ -102,6 +121,7 @@ export const LoginCard = () => {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="••••••••"
                   {...register("password", {
                     required: "Password is required",
                     minLength: { value: 6, message: "Password must be at least 6 characters" },
@@ -111,16 +131,34 @@ export const LoginCard = () => {
                   <span className="text-red-500 text-sm">{errors.password.message}</span>
                 )}
               </div>
+
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register("confirmPassword", {
+                    required: "Please confirm your password",
+                    validate: (value) =>
+                      value === password || "Passwords do not match",
+                  })}
+                />
+                {errors.confirmPassword && (
+                  <span className="text-red-500 text-sm">{errors.confirmPassword.message}</span>
+                )}
+              </div>
             </div>
 
             <CardFooter className="flex-col gap-2 mt-4">
               <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
-                {isSubmitting ? "Logging in..." : "Login"}
+                {isSubmitting ? "Creating account..." : "Create account"}
               </Button>
               <div className="text-sm text-center text-muted-foreground mt-2">
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-primary hover:underline">
-                  Sign up
+                Already have an account?{" "}
+                <Link href="/login" className="text-primary hover:underline">
+                  Login
                 </Link>
               </div>
             </CardFooter>
@@ -130,3 +168,4 @@ export const LoginCard = () => {
     </div>
   );
 };
+

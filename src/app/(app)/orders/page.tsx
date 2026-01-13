@@ -178,7 +178,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-[#1f2326] text-white overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background text-foreground overflow-hidden">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
         {/* Filter Tabs and Actions */}
@@ -189,7 +189,7 @@ export default function OrdersPage() {
               className={`${
                 selectedFilter === "all"
                   ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
               onClick={() => setSelectedFilter("all")}
             >
@@ -200,7 +200,7 @@ export default function OrdersPage() {
               className={`${
                 selectedFilter === "in_process"
                   ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
               onClick={() => setSelectedFilter("in_process")}
             >
@@ -211,7 +211,7 @@ export default function OrdersPage() {
               className={`${
                 selectedFilter === "completed"
                   ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
               onClick={() => setSelectedFilter("completed")}
             >
@@ -222,7 +222,7 @@ export default function OrdersPage() {
               className={`${
                 selectedFilter === "cancelled"
                   ? "bg-[#FAC1D9] text-black hover:bg-[#FAC1D9]/80"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
               onClick={() => setSelectedFilter("cancelled")}
             >
@@ -238,12 +238,12 @@ export default function OrdersPage() {
               Add New Order
             </Button>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search a name, order or etc"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64 bg-[#2a2e32] border-gray-700 text-white placeholder:text-gray-400"
+                className="pl-10 w-64 bg-card border-border text-card-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -252,7 +252,7 @@ export default function OrdersPage() {
         {/* Orders Grid */}
         {loading ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">Loading orders...</p>
+            <p className="text-muted-foreground">Loading orders...</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6 overflow-y-auto flex-1 pr-2 auto-rows-min">
@@ -284,7 +284,7 @@ export default function OrdersPage() {
               }
 
               return (
-                <Card key={order.id} className="bg-[#2a2e32] border-gray-700 p-6 flex flex-col h-auto w-full">
+                <Card key={order.id} className="bg-card border-border p-6 flex flex-col h-auto w-full">
                   {/* Header with Order Number and Customer Info */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-4 flex-1">
@@ -293,10 +293,10 @@ export default function OrdersPage() {
                         {String(index + 1).padStart(2, "0")}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-base whitespace-nowrap overflow-hidden text-ellipsis">
+                        <p className="font-semibold text-base whitespace-nowrap overflow-hidden text-ellipsis text-card-foreground">
                           {order.createdBy?.name || order.createdBy?.email || "Watson Joyce"}
                         </p>
-                        <p className="text-sm text-gray-400">Order # {order.id.slice(-3).padStart(3, "0")}</p>
+                        <p className="text-sm text-muted-foreground">Order # {order.id.slice(-3).padStart(3, "0")}</p>
                       </div>
                     </div>
                     {/* Status Badge Top Right */}
@@ -308,21 +308,21 @@ export default function OrdersPage() {
                       {orderStatus.subStatus && (
                         <div className="flex items-center gap-1.5">
                           <div className={`h-2 w-2 rounded-full ${statusDotColor}`}></div>
-                          <span className="text-xs text-gray-400">{orderStatus.subStatus}</span>
+                          <span className="text-xs text-muted-foreground">{orderStatus.subStatus}</span>
                         </div>
                       )}
                     </div>
                   </div>
 
                   {/* Date and Time */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-400">{date}</p>
-                    <p className="text-sm text-gray-400">{time}</p>
+                  <div className="mb-4 flex justify-between">
+                    <p className="text-sm text-muted-foreground">{date}</p>
+                    <p className="text-sm text-muted-foreground">{time}</p>
                   </div>
 
                   {/* Order Items Table */}
                   <div className="mb-4 flex-1">
-                    <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 mb-2 pb-1 border-b border-gray-700">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1 border-b border-border">
                       <span>Qty</span>
                       <span>Items</span>
                       <span className="text-right">Price</span>
@@ -330,22 +330,22 @@ export default function OrdersPage() {
                     <div className="space-y-1.5 mt-2">
                       {order.items.slice(0, 4).map((item) => (
                         <div key={item.id} className="grid grid-cols-3 gap-2 text-sm">
-                          <span className="text-gray-300">{String(item.quantity).padStart(2, "0")}</span>
-                          <span className="text-gray-300 text-sm">{item.product.name}</span>
-                          <span className="text-right font-semibold text-gray-300">${(item.price * item.quantity).toFixed(2)}</span>
+                          <span className="text-card-foreground">{String(item.quantity).padStart(2, "0")}</span>
+                          <span className="text-card-foreground text-sm">{item.product.name}</span>
+                          <span className="text-right font-semibold text-card-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
                       {order.items.length > 4 && (
-                        <p className="text-xs text-gray-500 mt-2">+{order.items.length - 4} more items</p>
+                        <p className="text-xs text-muted-foreground mt-2">+{order.items.length - 4} more items</p>
                       )}
                     </div>
                   </div>
 
                   {/* SubTotal */}
-                  <div className="mb-4 pt-2 border-t border-gray-700">
+                  <div className="mb-4 pt-2 border-t border-border">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400 text-sm">SubTotal</span>
-                      <span className="font-semibold text-base">${order.totalAmount.toFixed(2)}</span>
+                      <span className="text-muted-foreground text-sm">SubTotal</span>
+                      <span className="font-semibold text-base text-card-foreground">${order.totalAmount.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -354,7 +354,7 @@ export default function OrdersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 bg-[#33373b] border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-gray-600 flex-shrink-0"
+                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
                       onClick={() => router.push(`/orders/edit/${order.id}`)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -362,12 +362,12 @@ export default function OrdersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-10 w-10 bg-[#33373b] border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-gray-600 flex-shrink-0 "
+                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0 "
                       onClick={() => handleDeleteOrder(order.id)}
                     >
                       <Trash2 className="h-4 w-4"/>
                     </Button>
-                    <Button className="flex-1 bg-[#FAC1D9] hover:bg-pink-600 text-black  h-10">
+                    <Button className="flex-1 bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black  h-10">
                       Pay Bill
                     </Button>
                   </div>
@@ -379,7 +379,7 @@ export default function OrdersPage() {
 
         {!loading && filteredOrders.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-400">No orders found</p>
+            <p className="text-muted-foreground">No orders found</p>
           </div>
         )}
       </div>
