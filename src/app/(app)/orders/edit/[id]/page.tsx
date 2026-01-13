@@ -239,14 +239,14 @@ export default function EditOrderPage() {
         </div>
 
         {/* Categories Grid */}
-        <div className="flex flex-wrap mb-6" style={{ gap: '24px' }}>
+        <div className="grid grid-cols-4 gap-6 mb-6">
           {loading ? (
             <p className="text-gray-400">Loading categories...</p>
           ) : (
             categories.map((category) => (
               <Card
                 key={category.id}
-                className={`bg-[#2a2e32] border-0 cursor-pointer hover:bg-[#33373b] transition-colors w-[170px] h-[170px] flex flex-col ${
+                className={`bg-[#2a2e32] border-0 cursor-pointer hover:bg-[#33373b] transition-colors h-[170px] flex flex-col ${
                   selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
                 }`}
                 onClick={() => setSelectedCategory(category.id)}
@@ -276,14 +276,14 @@ export default function EditOrderPage() {
         </div>
 
         {/* Product Items Grid */}
-        <div className="flex flex-wrap overflow-y-auto flex-1" style={{ gap: '24px' }}>
+        <div className="grid grid-cols-4 gap-6 overflow-y-auto flex-1">
           {loadingProducts ? (
             <p className="text-gray-400">Loading products...</p>
           ) : (
             filteredProducts.map((product) => {
               const quantity = quantities[product.id] || 1
               return (
-                <Card key={product.id} className="bg-[#2a2e32] border-0 w-[170px] h-[170px] flex flex-col overflow-hidden">
+                <Card key={product.id} className="bg-[#2a2e32] border-0 h-[170px] flex flex-col overflow-hidden">
                   <div className="p-3 flex flex-col h-full justify-between">
                     <div className="flex-1">
                       <div className="text-[10px] text-[#FAC1D9] mb-1.5">Order → Kitchen</div>

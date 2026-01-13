@@ -105,9 +105,9 @@ export default function OrdersPage() {
 
     // Mock status logic - you can replace this with actual status from backend
     if (diffHours > 24) {
-      return { status: "Completed", color: "bg-blue-500", icon: CheckCircle2 }
+      return { status: "Completed", color: "bg-[#B2E8FF]", icon: CheckCircle2 }
     } else if (diffHours > 2) {
-      return { status: "Ready", color: "bg-green-500", icon: CheckCircle2, subStatus: "Ready to serve" }
+      return { status: "Ready", color: "bg-[#E3FFE4]", icon: CheckCircle2, subStatus: "Ready to serve" }
     } else if (diffHours > 1) {
       return { status: "In Process", color: "bg-[#FFEBDE]", icon: Clock, subStatus: "Cooking Now" }
     } else {
@@ -262,13 +262,17 @@ export default function OrdersPage() {
               const StatusIcon = orderStatus.icon
 
               // Determine status colors based on status type
-              let statusBgColor = "bg-green-500"
+              let statusBgColor = "bg-[#E3FFE4]"
               let statusDotColor = "bg-green-500"
-              let statusTextColor = "text-white"
+              let statusTextColor = "text-black"
               if (orderStatus.status === "Completed") {
-                statusBgColor = "bg-blue-500"
+                statusBgColor = "bg-[#B2E8FF]"
                 statusDotColor = "bg-blue-500"
-                statusTextColor = "text-white"
+                statusTextColor = "text-black"
+              } else if (orderStatus.status === "Ready") {
+                statusBgColor = "bg-[#E3FFE4]"
+                statusDotColor = "bg-green-500"
+                statusTextColor = "text-black"
               } else if (orderStatus.status === "In Process") {
                 statusBgColor = "bg-[#FFEBDE]"
                 statusTextColor = "text-black"
