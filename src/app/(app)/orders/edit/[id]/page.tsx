@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import axios from "axios"
+import api from "@/lib/axios"
 
 interface Category {
   id: string
@@ -40,7 +41,6 @@ export default function EditOrderPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({})
   const [cart, setCart] = useState<CartItem[]>([])
   const [customerName, setCustomerName] = useState("Watson Joyce")
   const [tableNumber, setTableNumber] = useState("01")
@@ -51,16 +51,7 @@ export default function EditOrderPage() {
   const fetchCategories = async () => {
     try {
       setLoading(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      const res = await axios.get(`${apiUrl}api/categories`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          pageIndex: 0,
-          pageSize: 100,
-        },
-      })
+      const res = await api.get(`/api/categories`)
 
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
@@ -81,16 +72,7 @@ export default function EditOrderPage() {
   const fetchProducts = async () => {
     try {
       setLoadingProducts(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      const res = await axios.get(`${apiUrl}api/products`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          pageIndex: 0,
-          pageSize: 100,
-        },
-      })
+      const res = await api.get(`/api/products`)
 
       setProducts(res.data.data || [])
     } catch (err: any) {
@@ -104,12 +86,7 @@ export default function EditOrderPage() {
   const fetchOrder = async () => {
     try {
       setLoadingOrder(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      const res = await axios.get(`${apiUrl}api/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await api.get(`/api/orders/${orderId}`)
 
       const order = res.data.data
       if (order) {
@@ -144,40 +121,38 @@ export default function EditOrderPage() {
     : products
 
   const updateQuantity = (productId: string, change: number) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [productId]: Math.max(0, (prev[productId] || 1) + change),
-    }))
-  }
+    const product = products.find((p) => p.id === productId)
+    if (!product) return
 
-  const addToCart = (product: Product) => {
-    const quantity = quantities[product.id] || 1
-    if (quantity === 0) return
+    const existingItem = cart.find((item) => item.productId === productId)
+    const currentCartQuantity = existingItem ? existingItem.quantity : 0
+    const newQuantity = Math.max(0, currentCartQuantity + change)
 
-    const existingItem = cart.find((item) => item.productId === product.id)
-    if (existingItem) {
-      setCart((prev) =>
-        prev.map((item) =>
-          item.productId === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+    if (newQuantity === 0) {
+      // Remove from cart if quantity reaches 0
+      setCart((prevCart) => prevCart.filter((item) => item.productId !== productId))
+    } else if (existingItem) {
+      // Update existing cart item
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.productId === productId
+            ? { ...item, quantity: newQuantity }
             : item
         )
       )
     } else {
-      setCart((prev) => [
-        ...prev,
+      // Add new item to cart
+      setCart((prevCart) => [
+        ...prevCart,
         {
           id: product.id,
           name: product.name,
           price: product.price,
-          quantity,
+          quantity: newQuantity,
           productId: product.id,
         },
       ])
     }
-
-    setQuantities((prev) => ({ ...prev, [product.id]: 1 }))
-    toast.success(`${product.name} added to cart`)
   }
 
   const removeFromCart = (productId: string) => {
@@ -195,26 +170,18 @@ export default function EditOrderPage() {
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      // Note: You may need to add an UPDATE endpoint in your backend
-      // For now, we'll create a new order and delete the old one, or use PUT if available
       const orderData = {
         items: cart.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
       }
-
       // If PUT endpoint exists, use it. Otherwise, show a message
       toast.info("Update order functionality - backend endpoint needed")
-      // await axios.put(`${apiUrl}api/orders/${orderId}`, orderData, {
-      //   headers: { Authorization: `Bearer ${token}` },
-      // })
+      // await api.put(`/api/orders/${orderId}`, orderData)
 
-      // toast.success("Order updated successfully")
-      // router.push("/orders")
+      toast.success("Order updated successfully")
+      router.push("/orders")
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to update order")
       console.error(err)
@@ -281,7 +248,8 @@ export default function EditOrderPage() {
             <p className="text-muted-foreground">Loading products...</p>
           ) : (
             filteredProducts.map((product) => {
-              const quantity = quantities[product.id] || 1
+              const cartItem = cart.find((item) => item.productId === product.id)
+              const quantity = cartItem ? cartItem.quantity : 0
               return (
                 <Card key={product.id} className="bg-card border-0 h-[170px] flex flex-col overflow-hidden">
                   <div className="p-3 flex flex-col h-full justify-between">

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import axios from "axios"
+import api from "@/lib/axios"
 
 interface OrderItem {
   id: string
@@ -45,23 +46,9 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      
       if (typeof window === "undefined") return
-      const token = localStorage.getItem("token")
 
-      if (!token) {
-        toast.error("Please login to view orders")
-        return
-      }
-
-      const res = await axios.get(`${apiUrl}api/orders`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          pageIndex: 0,
-          pageSize: 100,
-        },
-      })
+      const res = await api.get(`/api/orders`)
 
       setOrders(res.data.data.data || [])
     } catch (err: any) {
@@ -155,17 +142,7 @@ export default function OrdersPage() {
     if (!confirm("Are you sure you want to delete this order?")) return
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
-
-      if (!token) {
-        toast.error("Please login to delete orders")
-        return
-      }
-
-      await axios.delete(`${apiUrl}api/orders/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      await api.delete(`/api/orders/${orderId}`)
       
       toast.success("Order deleted successfully")
       
