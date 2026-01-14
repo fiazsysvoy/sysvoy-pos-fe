@@ -15,8 +15,7 @@ const Users = () => {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const getUsers = async () => {
-    console.log("fetching users")
-    const response = await api.get(`${API_URL}api/users`);
+    const response = await api.get(`/api/users`);
     setUsers(response.data.data);
   };
 

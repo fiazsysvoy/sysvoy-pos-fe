@@ -117,6 +117,14 @@ export const LoginCard = () => {
               <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
                 {isSubmitting ? "Logging in..." : "Login"}
               </Button>
+              {/* forgot pass */}
+              <Button asChild variant="link" className="px-0 font-normal">
+                <Link href="/forgot-password">
+                  Forgot Password?
+                </Link>
+              </Button>
+
+              {/* signup link */}
               <div className="text-sm text-center text-muted-foreground mt-2">
                 Don't have an account?{" "}
                 <Link href="/signup" className="text-primary hover:underline">
