@@ -66,7 +66,7 @@ export default function EditOrderPage() {
         id: cat.id,
         name: cat.name,
         itemsCount: cat.itemsCount || 0,
-        imageUrl: cat.imageUrl || "",
+        imageUrl: cat.imageUrl,
       }))
 
       setCategories(data)

@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import Loader from "@/components/common/Loader";
 import Link from "next/link";
+import api from "@/lib/axios";
+import { useAuthFlow } from "@/context/auth-flow-context";
 
 interface SignupForm {
   name: string;
@@ -29,6 +31,8 @@ export const SignupCard = () => {
   } = useForm<SignupForm>({
     mode: "onChange",
   });
+
+  const { setEmail } = useAuthFlow();
 
   const router = useRouter();
   const password = watch("password");
@@ -50,15 +54,16 @@ export const SignupCard = () => {
 
   const onSubmit = async (data: SignupForm) => {
     try {
-      // This is just UI - no actual API call
-      toast.success("Signup form submitted successfully!");
-      console.log("Signup data:", {
+      await api.post("/api/auth/signup", {
         name: data.name,
         email: data.email,
         password: data.password,
       });
-      // In a real app, you would call your signup API here
-      // await api.post("/api/auth/signup", { ... });
+      // toast.success("Signup successful! Please login.");
+
+      // verify email otp
+      setEmail(data.email);
+      router.push("/verify-email");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Signup failed");
       console.error(err);

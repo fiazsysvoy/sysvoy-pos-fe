@@ -17,7 +17,7 @@ import CustomSelectInput from "./Select-Input"
 import api from "@/lib/axios"
 import { toast } from "sonner"
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-export function UserDialog({ open, setOpen, user, setEditing, editing, refetch,setUser }: { open?: boolean, setOpen: (open: boolean) => void, user: any, setEditing: (editing: boolean) => void, editing: boolean, refetch: () => void, setUser: (user: any) => void }) {
+export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, setUser }: { open?: boolean, setOpen: (open: boolean) => void, user: any, setEditing: (editing: boolean) => void, editing: boolean, refetch: () => void, setUser: (user: any) => void }) {
     const {
         register,
         handleSubmit,
@@ -28,24 +28,28 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch,s
         mode: "onChange",
     });
     const onSubmit = async (data: any) => {
-        console.log("submitted", editing);
-        if (editing) {
-            const res = await api.put(`${API_URL}api/users/${user.id}`, data);
-            if (res.status == 200) {
-                setOpen(false);
-                setEditing(false);
+        try {
+            if (editing) {
+                const res = await api.put(`${API_URL}api/users/${user.id}`, data);
+                if (res.status == 200) {
+                    setOpen(false);
+                    setEditing(false);
+                    setUser(null);
+                    refetch();
+                    toast.success("User updated successfully");
+                }
+                return;
+            }
+            const res = await api.post(`${API_URL}api/users`, data);
+            if (res.status == 201) {
                 setUser(null);
+                setOpen(false);
                 refetch();
-                toast.success("User updated successfully");
-            };
-            return;
-        }
-        const res = await api.post(`${API_URL}api/users`, data);
-        if (res.status == 201) {
-            setUser(null);
-            setOpen(false);
-            refetch();
-            toast.success("User added successfully");
+                toast.success("User added successfully");
+            }
+        } catch (err: any) {
+            console.error(err.message);
+            toast.error(err?.response?.data?.message || "An error occurred. Please try again.")
         }
     };
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,25 +104,25 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch,s
                         </div>
                         {!editing && (
                             <div className="grid gap-3">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                value={user?.password || ''}
-                                id="password"
-                                type="password"
-                                {...register("password", {
-                                    required: "Password is required",
-                                    minLength: {
-                                        value: 6,
-                                        message: "Password must be at least 6 characters",
-                                    },
-                                })}
-                                onChange={handleChange}
-                            />
-                            {errors.password && (
-                                <span className="text-red-500 text-sm">{String(errors.password.message)}</span>
-                            )}
-                        </div>
-                         )}
+                                <Label htmlFor="password">Password</Label>
+                                <Input
+                                    value={user?.password || ''}
+                                    id="password"
+                                    type="password"
+                                    {...register("password", {
+                                        required: "Password is required",
+                                        minLength: {
+                                            value: 6,
+                                            message: "Password must be at least 6 characters",
+                                        },
+                                    })}
+                                    onChange={handleChange}
+                                />
+                                {errors.password && (
+                                    <span className="text-red-500 text-sm">{String(errors.password.message)}</span>
+                                )}
+                            </div>
+                        )}
                         <div className="grid gap-3">
                             <Label htmlFor="role">Role</Label>
                             <Controller
@@ -143,7 +147,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch,s
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button variant="outline" onClick={() => { setOpen(false); setEditing(false) ; setUser(null) }}>Cancel</Button>
+                            <Button variant="outline" onClick={() => { setOpen(false); setEditing(false); setUser(null) }}>Cancel</Button>
                         </DialogClose>
                         <Button type="submit" onClick={handleSubmit(onSubmit)}>Save changes</Button>
                     </DialogFooter>

@@ -11,6 +11,7 @@ import api from "@/lib/axios";
 import { useEffect, useState } from "react";
 import Loader from "@/components/common/Loader";
 import Link from "next/link";
+import { useAuthFlow } from "@/context/auth-flow-context";
 
 interface LoginForm {
   email: string;
@@ -29,6 +30,7 @@ export const LoginCard = () => {
   });
 
   const router = useRouter();
+  const { setEmail, setTempToken } = useAuthFlow();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -53,9 +55,21 @@ export const LoginCard = () => {
       });
 
       if (res.data?.token) {
-        localStorage.setItem("token", res.data.token);
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        const userStatus = res.data.status;
+        if (userStatus === "UNVERIFIED_EMAIL") {
+          toast.success("unverified email");
+          setEmail(data.email);
+          router.replace("/verify-email");
+        } else if (userStatus === "ORG_UNATTACHED") {
+          toast.success("Login successful!");
+          setTempToken(res.data.token);
+          // localStorage.setItem("token", res.data.token); 
+          router.replace("/setup-business");
+        } else if (userStatus === "ACTIVE") {
+          localStorage.setItem("token", res.data.token);
+          toast.success("Login successful!");
+          router.replace("/dashboard");
+        }
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Invalid login credentials");

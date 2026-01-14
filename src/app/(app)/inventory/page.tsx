@@ -65,7 +65,7 @@ export default function MenuPage() {
         name: cat.name,
         description: cat.description || "",
         itemsCount: cat.itemsCount || 0,
-        imageUrl: cat.imageUrl || "",
+        imageUrl: cat.imageUrl,
       }));
 
       const totalItems = res.data.meta?.total || 0;
