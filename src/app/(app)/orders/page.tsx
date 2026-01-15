@@ -24,6 +24,7 @@ interface OrderItem {
 
 interface Order {
   id: string
+  name:string
   totalAmount: number
   createdAt: string
   status: "IN_PROCESS" | "COMPLETED" | "CANCELLED"
@@ -308,7 +309,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-base whitespace-nowrap overflow-hidden text-ellipsis text-card-foreground">
-                          {order.createdBy?.name || order.createdBy?.email || "Watson Joyce"}
+                          {order.name || 'Order'}
                         </p>
                         <p className="text-sm text-muted-foreground">Order # {order.id.slice(-3).padStart(3, "0")}</p>
                       </div>

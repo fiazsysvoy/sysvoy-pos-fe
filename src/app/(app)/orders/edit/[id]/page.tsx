@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { ChevronLeft, Minus, Plus, Pencil, ScanLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
-import axios from "axios"
 import api from "@/lib/axios"
 
 interface Category {
@@ -42,11 +41,18 @@ export default function EditOrderPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [cart, setCart] = useState<CartItem[]>([])
-  const [customerName, setCustomerName] = useState("Watson Joyce")
-  const [tableNumber, setTableNumber] = useState("01")
+  // const [customerName, setCustomerName] = useState("Watson Joyce")
+  const [orderName, setOrderName] = useState("Order")
   const [loading, setLoading] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingOrder, setLoadingOrder] = useState(false)
+
+  const [isEditing, setIsEditing] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleSave = () => {
+    setIsEditing(false)
+  }
 
   const fetchCategories = async () => {
     try {
@@ -98,6 +104,7 @@ export default function EditOrderPage() {
           quantity: item.quantity,
           productId: item.productId,
         }))
+        setOrderName(order.name);
         setCart(orderItems)
       }
     } catch (err: any) {
@@ -171,14 +178,13 @@ export default function EditOrderPage() {
 
     try {
       const orderData = {
+        name: orderName,
         items: cart.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
       }
-      // If PUT endpoint exists, use it. Otherwise, show a message
-      toast.info("Update order functionality - backend endpoint needed")
-      // await api.put(`/api/orders/${orderId}`, orderData)
+      await api.put(`/api/orders/${orderId}`, orderData)
 
       toast.success("Order updated successfully")
       router.push("/orders")
@@ -213,9 +219,8 @@ export default function EditOrderPage() {
             categories.map((category) => (
               <Card
                 key={category.id}
-                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${
-                  selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
-                }`}
+                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
+                  }`}
                 onClick={() => setSelectedCategory(category.id)}
               >
                 <div className="p-4 flex flex-col items-center justify-center h-full">
@@ -292,21 +297,37 @@ export default function EditOrderPage() {
       {/* Right Sidebar - Order Summary */}
       <div className="w-96 bg-card border-l border-border flex flex-col h-full">
         <div className="p-6 border-b border-border">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold text-card-foreground">Table {tableNumber}</h2>
+          <div className="flex items-center justify-between gap-2">
+            {isEditing ? (
+              <input
+                ref={inputRef}
+                autoFocus
+                value={orderName}
+                onChange={(e) => setOrderName(e.target.value)}
+                onBlur={handleSave}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave()
+                  if (e.key === "Escape") setIsEditing(false)
+                }}
+                className="text-2xl font-bold bg-transparent border-b border-border outline-none text-card-foreground"
+              />
+            ) : (
+              <h2 className="text-2xl font-bold text-card-foreground" onClick={() => setIsEditing(true)}>
+                {orderName}
+              </h2>
+            )}
+
             <Button
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-card-foreground hover:bg-accent"
-              onClick={() => {
-                const newTable = prompt("Enter table number:", tableNumber)
-                if (newTable) setTableNumber(newTable)
-              }}
+              onClick={() => setIsEditing(true)}
             >
               <Pencil className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* <div className="flex items-center gap-2">
             <p className="text-muted-foreground">{customerName}</p>
             <Button
               variant="ghost"
@@ -319,7 +340,7 @@ export default function EditOrderPage() {
             >
               <Pencil className="h-3 w-3" />
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* Ordered Items List */}

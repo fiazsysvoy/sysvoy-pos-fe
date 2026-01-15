@@ -13,15 +13,24 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import Image from "next/image"
 import globe from '../../public/globe.svg';
-const ItemCard = ({ CardTitle, buttonText, path, Items }: { CardTitle: string, buttonText: string, path: string, Items: Array<{ title: string, description: string, price: string, status: string }> }) => {
+
+interface Props {
+    CardTitle: string,
+    buttonText: string,
+    path: string,
+    Items: Array<{ title: string, description: string, price: string, status: string }>
+}
+
+const ItemCard = (
+    { CardTitle, buttonText, path, Items }: Props) => {
     const router = useRouter()
     return (
-        <Card className="grid grid-row-1 sm:grid-row-1 lg:grid-row-2 gap-6 p-6 w-full shadow-md bg-card">
+        <Card className="grid grid-rows-[auto_1fr] gap-6 p-6 w-full shadow-md bg-card">
             <CardHeader className="flex justify-between items-center flex-row">
                 <h2 className="text-card-foreground font-medium">{CardTitle}</h2>
                 <Button variant="ghost" size="sm" className="ml-auto" onClick={() => { router.push(path) }}>{buttonText}</Button>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
+            <CardContent className="flex flex-col gap-4 self-start">
                 {Items.map((item, index) => (
                     <Item key={index} variant="outline" className="bg-transparent">
                         <ItemContent className="flex flex-row">
@@ -35,7 +44,7 @@ const ItemCard = ({ CardTitle, buttonText, path, Items }: { CardTitle: string, b
                         </ItemContent>
                         <ItemActions className="flex flex-col gap-2 text-sm">
                             <ItemDescription className="text-card-foreground/80">
-                                {item.price}
+                                ${item.price}
                             </ItemDescription>
                             <ItemDescription className="text-card-foreground/60">
                                 {item.status}
