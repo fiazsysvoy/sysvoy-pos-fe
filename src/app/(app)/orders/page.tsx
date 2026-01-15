@@ -299,7 +299,10 @@ export default function OrdersPage() {
               }
 
               return (
-                <Card key={order.id} className="bg-card border-border p-6 flex flex-col h-auto w-full">
+                <Card
+                  key={order.id}
+                  className="bg-card border-border p-6 flex flex-col h-[340px] w-full overflow-hidden"
+                >
                   {/* Header with Order Number and Customer Info */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-4 flex-1">
@@ -338,23 +341,20 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Items Table */}
-                  <div className="mb-4 flex-1">
-                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1 border-b border-border">
+                  <div className="mb-4 flex-1 flex flex-col overflow-hidden">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1 border-b border-border sticky top-0 bg-card z-10">
                       <span>Qty</span>
                       <span>Items</span>
                       <span className="text-right">Price</span>
                     </div>
-                    <div className="space-y-1.5 mt-2">
-                      {order.items.slice(0, 4).map((item) => (
+                    <div className="space-y-1.5 mt-2 overflow-y-auto pr-1 h-[4.5rem]">
+                      {order.items.map((item) => (
                         <div key={item.id} className="grid grid-cols-3 gap-2 text-sm">
                           <span className="text-card-foreground">{String(item.quantity).padStart(2, "0")}</span>
                           <span className="text-card-foreground text-sm">{item.product.name}</span>
                           <span className="text-right font-semibold text-card-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
                       ))}
-                      {order.items.length > 4 && (
-                        <p className="text-xs text-muted-foreground mt-2">+{order.items.length - 4} more items</p>
-                      )}
                     </div>
                   </div>
 

@@ -34,7 +34,7 @@ export function OverviewChart() {
         <h2 className="text-xl font-semibold">Overview</h2>
 
         <div className="flex items-center gap-2">
-          <Button variant="secondary" className="bg-chart-accent text-sidebar-accent-foreground">
+          <Button variant="secondary" className="bg-chart-accent text-black">
             Monthly
           </Button>
           <Button variant="ghost">Daily</Button>
