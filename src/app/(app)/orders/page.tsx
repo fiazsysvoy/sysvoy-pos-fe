@@ -26,6 +26,9 @@ interface Order {
   id: string
   totalAmount: number
   createdAt: string
+  status: "IN_PROCESS" | "COMPLETED" | "CANCELLED"
+  completedAt?: string | null
+  cancelledAt?: string | null
   items: OrderItem[]
   createdBy?: {
     id: string
@@ -34,13 +37,13 @@ interface Order {
   } | null
 }
 
-type OrderStatus = "all" | "in_process" | "completed" | "cancelled"
+type OrderFilterStatus = "all" | "in_process" | "completed" | "cancelled"
 
 export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedFilter, setSelectedFilter] = useState<OrderStatus>("all")
+  const [selectedFilter, setSelectedFilter] = useState<OrderFilterStatus>("all")
   const [searchQuery, setSearchQuery] = useState("")
 
   const fetchOrders = useCallback(async () => {
@@ -83,42 +86,39 @@ export default function OrdersPage() {
     }
   }
 
-  const getOrderStatus = (order: Order): { status: string; color: string; icon: any; subStatus?: string } => {
-    // For now, we'll use a simple logic based on order age or other factors
-    // In a real app, this would come from the order model
-    const orderDate = new Date(order.createdAt)
-    const now = new Date()
-    const diffHours = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60)
-
-    // Mock status logic - you can replace this with actual status from backend
-    if (diffHours > 24) {
-      return { status: "Completed", color: "bg-[#B2E8FF]", icon: CheckCircle2 }
-    } else if (diffHours > 2) {
-      return { status: "Ready", color: "bg-[#E3FFE4]", icon: CheckCircle2, subStatus: "Ready to serve" }
-    } else if (diffHours > 1) {
-      return { status: "In Process", color: "bg-[#FFEBDE]", icon: Clock, subStatus: "Cooking Now" }
-    } else {
-      return { status: "In Process", color: "bg-[#FFEBDE]", icon: Clock, subStatus: "In the Kitchen" }
+  const getOrderStatus = (
+    order: Order,
+  ): { status: string; color: string; icon: any; subStatus?: string } => {
+    switch (order.status) {
+      case "COMPLETED":
+        return { status: "Completed", color: "bg-[#B2E8FF]", icon: CheckCircle2 }
+      case "CANCELLED":
+        return {
+          status: "Cancelled",
+          color: "bg-[#FFEBDE]",
+          icon: Clock,
+          subStatus: "Cancelled",
+        }
+      case "IN_PROCESS":
+      default:
+        return {
+          status: "In Process",
+          color: "bg-[#FFEBDE]",
+          icon: Clock,
+          subStatus: "In the Kitchen",
+        }
     }
   }
 
   const filteredOrders = orders.filter((order) => {
     // Filter by status
     if (selectedFilter !== "all") {
-      const orderStatus = getOrderStatus(order)
       if (selectedFilter === "in_process") {
-        // Show orders that are "In Process" or "Ready"
-        if (orderStatus.status !== "In Process" && orderStatus.status !== "Ready") {
-          return false
-        }
+        if (order.status !== "IN_PROCESS") return false
       } else if (selectedFilter === "completed") {
-        if (orderStatus.status !== "Completed") {
-          return false
-        }
+        if (order.status !== "COMPLETED") return false
       } else if (selectedFilter === "cancelled") {
-        if (orderStatus.status !== "Cancelled") {
-          return false
-        }
+        if (order.status !== "CANCELLED") return false
       }
     }
 
@@ -137,19 +137,42 @@ export default function OrdersPage() {
     return true
   })
 
-  const handleDeleteOrder = async (orderId: string) => {
+  const handleCancelOrder = async (orderId: string) => {
     if (typeof window === "undefined") return
-    if (!confirm("Are you sure you want to delete this order?")) return
+    if (!confirm("Are you sure you want to cancel this order?")) return
 
     try {
-      await api.delete(`/api/orders/${orderId}`)
+      await api.patch(`/api/orders/${orderId}`, { status: "CANCELLED" })
       
-      toast.success("Order deleted successfully")
+      toast.success("Order cancelled successfully")
       
-      // Refresh the orders list to show remaining orders
+      // Refresh the orders list to reflect updated status
       await fetchOrders()
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.response?.data?.errors?.[0] || "Failed to delete order")
+      toast.error(
+        err.response?.data?.message ||
+          err.response?.data?.errors?.[0] ||
+          "Failed to cancel order",
+      )
+      console.error(err)
+    }
+  }
+
+  const handleCompleteOrder = async (orderId: string) => {
+    if (typeof window === "undefined") return
+
+    try {
+      await api.patch(`/api/orders/${orderId}`, { status: "COMPLETED" })
+
+      toast.success("Order marked as completed")
+
+      await fetchOrders()
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message ||
+          err.response?.data?.errors?.[0] ||
+          "Failed to complete order",
+      )
       console.error(err)
     }
   }
@@ -234,7 +257,21 @@ export default function OrdersPage() {
         ) : (
           <div className="grid grid-cols-3 gap-6 overflow-y-auto flex-1 pr-2 auto-rows-min">
             {filteredOrders.map((order, index) => {
-              const { date, time } = formatDate(order.createdAt)
+              // Choose the appropriate timestamp and label based on status
+              let referenceDate: string = order.createdAt
+              let statusTimeLabel = "Created at"
+
+              if (order.status === "COMPLETED" && order.completedAt) {
+                referenceDate = order.completedAt
+                statusTimeLabel = "Completed at"
+              } else if (order.status === "CANCELLED" && order.cancelledAt) {
+                referenceDate = order.cancelledAt
+                statusTimeLabel = "Cancelled at"
+              } else if (order.status === "CANCELLED") {
+                statusTimeLabel = "Cancelled at"
+              }
+
+              const { date, time } = formatDate(referenceDate)
               const orderStatus = getOrderStatus(order)
               const StatusIcon = orderStatus.icon
 
@@ -291,9 +328,11 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Date and Time */}
+                  {/* Date and Time (based on status) */}
                   <div className="mb-4 flex justify-between">
-                    <p className="text-sm text-muted-foreground">{date}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {statusTimeLabel}: {date}
+                    </p>
                     <p className="text-sm text-muted-foreground">{time}</p>
                   </div>
 
@@ -326,28 +365,33 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2 mt-auto">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
-                      onClick={() => router.push(`/orders/edit/${order.id}`)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0 "
-                      onClick={() => handleDeleteOrder(order.id)}
-                    >
-                      <Trash2 className="h-4 w-4"/>
-                    </Button>
-                    <Button className="flex-1 bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black  h-10">
-                      Pay Bill
-                    </Button>
-                  </div>
+                  {/* Action Buttons (only for IN_PROCESS orders) */}
+                  {order.status === "IN_PROCESS" && (
+                    <div className="flex items-center gap-2 mt-auto">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
+                        onClick={() => router.push(`/orders/edit/${order.id}`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0 "
+                        onClick={() => handleCancelOrder(order.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        className="flex-1 bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black  h-10"
+                        onClick={() => handleCompleteOrder(order.id)}
+                      >
+                        Pay Bill
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               )
             })}
