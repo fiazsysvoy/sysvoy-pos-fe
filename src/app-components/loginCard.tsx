@@ -59,7 +59,11 @@ export const LoginCard = () => {
         if (userStatus === "UNVERIFIED_EMAIL") {
           toast.success("unverified email");
           setEmail(data.email);
+          
+          // resending verification otp email
+          await api.post("/api/auth/resend-verification", { email: data.email });
           router.replace("/verify-email");
+
         } else if (userStatus === "ORG_UNATTACHED") {
           toast.success("Login successful!");
           setTempToken(res.data.token);

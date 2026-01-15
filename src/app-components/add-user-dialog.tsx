@@ -16,6 +16,7 @@ import { Controller, set, useForm } from "react-hook-form"
 import CustomSelectInput from "./Select-Input"
 import api from "@/lib/axios"
 import { toast } from "sonner"
+import { useState } from "react"
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, setUser }: { open?: boolean, setOpen: (open: boolean) => void, user: any, setEditing: (editing: boolean) => void, editing: boolean, refetch: () => void, setUser: (user: any) => void }) {
     const {
@@ -27,8 +28,11 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
     } = useForm({
         mode: "onChange",
     });
+    const [isLoading, setIsLoading] = useState(false);
+
     const onSubmit = async (data: any) => {
         try {
+            setIsLoading(true);
             if (editing) {
                 const res = await api.put(`${API_URL}api/users/${user.id}`, data);
                 if (res.status == 200) {
@@ -50,6 +54,8 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
         } catch (err: any) {
             console.error(err.message);
             toast.error(err?.response?.data?.message || "An error occurred. Please try again.")
+        } finally {
+            setIsLoading(false);
         }
     };
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +108,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
                                 <span className="text-red-500 text-sm">{String(errors.email.message)}</span>
                             )}
                         </div>
-                        {!editing && (
+                        {/* {!editing && (
                             <div className="grid gap-3">
                                 <Label htmlFor="password">Password</Label>
                                 <Input
@@ -122,7 +128,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
                                     <span className="text-red-500 text-sm">{String(errors.password.message)}</span>
                                 )}
                             </div>
-                        )}
+                        )} */}
                         <div className="grid gap-3">
                             <Label htmlFor="role">Role</Label>
                             <Controller
@@ -149,7 +155,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
                         <DialogClose asChild>
                             <Button variant="outline" onClick={() => { setOpen(false); setEditing(false); setUser(null) }}>Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" onClick={handleSubmit(onSubmit)}>Save changes</Button>
+                        <Button type="submit" onClick={handleSubmit(onSubmit)} disabled={isLoading}>{isLoading ? "Saving..." : "Save changes"}</Button>
                     </DialogFooter>
                 </DialogContent>
             </form>
