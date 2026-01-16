@@ -14,6 +14,14 @@ const Dollar = () => (
 const DashBoard = () => {
     const [ordersData, setOrdersData] = useState([]);
     const [productsData, setProductsData] = useState([]);
+    const [revenueStats, setRevenueStats] = useState({
+        today: 0,
+        thisWeek: 0,
+        thisMonth: 0,
+        todayData: [] as Array<{ time: string; revenue: number }>,
+        weekData: [] as Array<{ date: string; revenue: number }>,
+        monthData: [] as Array<{ date: string; revenue: number; week?: number }>
+    });
 
     const fetchOrders = async () => {
         try {
@@ -50,17 +58,124 @@ const DashBoard = () => {
             toast.error(err.message || "Something went wrong fetching orders.")
         }
     }
+
+    const fetchRevenueStats = async () => {
+        try {
+            const res = await api.get('/api/orders/stats/revenue');
+            setRevenueStats(res.data.data);
+        } catch (err: any) {
+            toast.error(err.message || "Something went wrong fetching revenue stats.")
+        }
+    }
+
     useEffect(() => {
         fetchOrders();
         fetchProducts();
+        fetchRevenueStats();
     }, [])
+
+    // Format date for display
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    // Get today's date
+    const today = new Date().toISOString().split('T')[0];
+    const todayFormatted = formatDate(today);
+
+    // Get start of week date (Monday)
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday (0) to 6 days back
+    startOfWeek.setDate(now.getDate() - daysToMonday);
+    const weekStartFormatted = formatDate(startOfWeek.toISOString().split('T')[0]);
+
+    // Get start of month date (first day of current month)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Format directly without timezone conversion to avoid date shifts
+    const monthStartFormatted = startOfMonth.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+
+    // Prepare chart data for today (hourly) - format time labels
+    const prepareTodayChartData = (hourlyData: Array<{ time: string; revenue: number }>) => {
+        return hourlyData.map(item => {
+            // Format time to be more readable (e.g., "09:00" -> "9 AM" or just "9")
+            const hour = parseInt(item.time.split(':')[0]);
+            const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+            return {
+                time: label,
+                revenue: item.revenue
+            };
+        });
+    };
+
+    // Prepare chart data for week (daily) - shorter labels
+    const prepareWeekChartData = (dailyData: Array<{ date: string; revenue: number }>) => {
+        return dailyData.map(item => {
+            const date = new Date(item.date);
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const dayNum = date.getDate();
+            return {
+                date: `${dayName} ${dayNum}`,
+                revenue: item.revenue
+            };
+        });
+    };
+
+    // Prepare chart data for month (weekly) - W1, W2, W3, W4 format
+    const prepareMonthChartData = (weeklyData: Array<{ date: string; revenue: number; week?: number }>) => {
+        return weeklyData.map(item => {
+            // If date is already in W1, W2 format, use it directly
+            if (item.date.startsWith('W')) {
+                return {
+                    date: item.date,
+                    revenue: item.revenue
+                };
+            }
+            // Fallback for old format
+            const date = new Date(item.date);
+            const month = date.toLocaleDateString('en-US', { month: 'short' });
+            const dayNum = date.getDate();
+            return {
+                date: `${month} ${dayNum}`,
+                revenue: item.revenue
+            };
+        });
+    };
+
+    const todayChartData = prepareTodayChartData(revenueStats.todayData);
+    const weekChartData = prepareWeekChartData(revenueStats.weekData);
+    const monthChartData = prepareMonthChartData(revenueStats.monthData);
 
     return (
         <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                <ChartCard title="Revenue" revenue={1000} data={[1, 2, 3]} date="2023-01-01" icon={Dollar} />
-                <ChartCard title="Revenue" revenue={1000} data={[1, 2, 3]} date="2023-01-01" icon={Dollar} />
-                <ChartCard title="Revenue" revenue={1000} data={[1, 2, 3]} date="2023-01-01" icon={Dollar} />
+                <ChartCard 
+                    title="Today's Revenue" 
+                    revenue={revenueStats.today} 
+                    data={todayChartData} 
+                    date={todayFormatted} 
+                    icon={Dollar} 
+                />
+                <ChartCard 
+                    title="This Week's Revenue" 
+                    revenue={revenueStats.thisWeek} 
+                    data={weekChartData} 
+                    date={`${weekStartFormatted} - ${todayFormatted}`} 
+                    icon={Dollar} 
+                />
+                <ChartCard 
+                    title="This Month's Revenue" 
+                    revenue={revenueStats.thisMonth} 
+                    data={monthChartData} 
+                    date={monthStartFormatted} 
+                    icon={Dollar} 
+                />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-1 lg:grid-cols-2 gap-6 p-6">
                 <ItemCard

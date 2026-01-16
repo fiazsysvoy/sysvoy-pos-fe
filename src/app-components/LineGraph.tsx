@@ -39,7 +39,6 @@ export function OverviewChart() {
           </Button>
           <Button variant="ghost">Daily</Button>
           <Button variant="ghost">Weekly</Button>
-          <Button variant="outline">Export</Button>
         </div>
       </CardHeader>
 

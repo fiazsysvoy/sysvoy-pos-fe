@@ -45,7 +45,6 @@ const Users = () => {
         <h1 className="text-2xl font-bold">Users{(users.length > 0) && ` (${users.length})`}</h1>
         <div className="flex flex-row gap-2">
           <Button variant="default" className="w-24 h-12 bg-gray-900 text-background dark:bg-chart-accent" onClick={() => setOpen(true)}>Add User</Button>
-          <Button variant="default" className="w-24 h-12 bg-gray-900 text-background dark:bg-chart-accent">Sort By </Button>
         </div>
       </div>
       <div className="p-6">

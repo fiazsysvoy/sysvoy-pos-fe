@@ -80,13 +80,6 @@ export function DataTable<TData, TValue>({
                                         <Edit className="w-4 h-4" />
                                     </button>
                                     <button
-                                        aria-label="View"
-                                        onClick={() => onView?.(row.original)}
-                                        className="p-2 rounded hover:bg-muted inline-flex items-center justify-center"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-                                    <button
                                         aria-label="Delete"
                                         onClick={() => onDelete?.(row.original)}
                                         className="p-2 rounded hover:bg-red-600/10 text-red-600 inline-flex items-center justify-center"
