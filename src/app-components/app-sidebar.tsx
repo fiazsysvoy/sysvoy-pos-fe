@@ -13,8 +13,9 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-// Menu items.
+import { usePathname } from "next/navigation";
+import { useUser } from "@/context/user-context";
+
 const items = [
     {
         title: "Home",
@@ -49,15 +50,9 @@ const items = [
 ]
 
 export function AppSidebar() {
-    const router = useRouter();
+    const { logout } = useUser();
     const [isOpen, setIsOpen] = useState(true);
     const pathname = usePathname();
-
-
-    const handleLogout = () => {
-        localStorage.clear();
-        router.replace("/");
-    };
 
     return (
         <>
@@ -105,7 +100,7 @@ export function AppSidebar() {
                 </SidebarContent>
                 <SidebarFooter>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => logout()}
                         className="flex flex-col p-4 justify-center items-center w-full"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20">
