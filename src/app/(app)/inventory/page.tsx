@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import CategoryCards from "@/app-components/category-cards";
 import MenuTable from "@/app-components/menu-table";
 import SingleProductSidebar from "@/app-components/single-product-sidebar";
@@ -39,12 +41,20 @@ export default function MenuPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  
+  // Search states
+  const [categorySearch, setCategorySearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
 
   // Fetch products
-  const fetchProducts = async () => {
+  const fetchProducts = async (searchQuery?: string) => {
     try {
       setLoadingProducts(true);
-      const res = await api.get("/api/products");
+      const params = new URLSearchParams();
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+      const res = await api.get(`/api/products?${params.toString()}`);
       setProducts(res.data.data);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to fetch products");
@@ -55,10 +65,14 @@ export default function MenuPage() {
   };
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = async (searchQuery?: string) => {
     try {
       setLoadingCategories(true);
-      const res = await api.get("/api/categories");
+      const params = new URLSearchParams();
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+      const res = await api.get(`/api/categories?${params.toString()}`);
 
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
@@ -90,10 +104,23 @@ export default function MenuPage() {
     setOpenCategorySidebar(true);
   };
 
+  // Effect for category search with debounce
   useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-  }, []);
+    const timeoutId = setTimeout(() => {
+      fetchCategories(categorySearch || undefined);
+    }, categorySearch ? 500 : 0); // No debounce when clearing search, 500ms when typing
+
+    return () => clearTimeout(timeoutId);
+  }, [categorySearch]);
+
+  // Effect for product search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchProducts(productSearch || undefined);
+    }, productSearch ? 500 : 0); // No debounce when clearing search, 500ms when typing
+
+    return () => clearTimeout(timeoutId);
+  }, [productSearch]);
 
   return (
     <>
@@ -103,12 +130,23 @@ export default function MenuPage() {
           <div className="text-xl font-semibold text-black dark:text-white">
             Categories
           </div>
-          <Button
-            className="bg-pink-300 text-black hover:bg-pink-400"
-            onClick={() => setOpenCategorySidebar(true)}
-          >
-            Add New Category
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search categories..."
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                className="pl-10 w-64 bg-card border-border text-card-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <Button
+              className="bg-pink-300 text-black hover:bg-pink-400"
+              onClick={() => setOpenCategorySidebar(true)}
+            >
+              Add New Category
+            </Button>
+          </div>
         </div>
 
         <div className="text-black overflow-auto max-w-full">
@@ -125,12 +163,23 @@ export default function MenuPage() {
           <div className="text-xl font-semibold text-black dark:text-white">
             Products
           </div>
-          <Button
-            className="bg-pink-300 text-black hover:bg-pink-400"
-            onClick={() => setOpenProductMenu(true)}
-          >
-            Add Menu Item
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search products..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="pl-10 w-64 bg-card border-border text-card-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <Button
+              className="bg-pink-300 text-black hover:bg-pink-400"
+              onClick={() => setOpenProductMenu(true)}
+            >
+              Add Menu Item
+            </Button>
+          </div>
         </div>
 
         <MenuTable
@@ -138,7 +187,10 @@ export default function MenuPage() {
           products={products}
           setProducts={setProducts}
           loading={loadingProducts}
-          onSuccess={async ()=>{ await fetchCategories(); await fetchProducts();}}
+          onSuccess={async ()=>{ 
+            await fetchCategories(categorySearch || undefined);
+            await fetchProducts(productSearch || undefined);
+          }}
         />
       </div>
 
@@ -151,7 +203,8 @@ export default function MenuPage() {
           }}
           category={selectedCategory}
           onSuccess={()=>{
-            fetchCategories(); fetchProducts();
+            fetchCategories(categorySearch || undefined);
+            fetchProducts(productSearch || undefined);
           }}
         />
       )}
@@ -162,8 +215,8 @@ export default function MenuPage() {
           categories={categories}
           onClose={() => setOpenProductMenu(false)}
           onSuccess={async ()=>{
-            await fetchCategories();
-            await fetchProducts();
+            await fetchCategories(categorySearch || undefined);
+            await fetchProducts(productSearch || undefined);
           }}
         />
       )}

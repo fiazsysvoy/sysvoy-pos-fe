@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Pencil, Trash2, CheckCircle2, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -46,13 +46,18 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<OrderFilterStatus>("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const isInitialMount = useRef(true)
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (searchQuery?: string) => {
     try {
       setLoading(true)
       if (typeof window === "undefined") return
 
-      const res = await api.get(`/api/orders`)
+      const params = new URLSearchParams()
+      if (searchQuery) {
+        params.append("search", searchQuery)
+      }
+      const res = await api.get(`/api/orders?${params.toString()}`)
 
       setOrders(res.data.data.data || [])
     } catch (err: any) {
@@ -63,9 +68,21 @@ export default function OrdersPage() {
     }
   }, [])
 
+  // Effect for order search with debounce
   useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+    // Skip debounce on initial mount, fetch immediately
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      fetchOrders()
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetchOrders(searchQuery || undefined)
+    }, searchQuery ? 500 : 0) // No debounce when clearing search, 500ms when typing
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, fetchOrders])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -111,6 +128,7 @@ export default function OrdersPage() {
     }
   }
 
+  // Filter orders by status only (search is now server-side)
   const filteredOrders = orders.filter((order) => {
     // Filter by status
     if (selectedFilter !== "all") {
@@ -120,18 +138,6 @@ export default function OrdersPage() {
         if (order.status !== "COMPLETED") return false
       } else if (selectedFilter === "cancelled") {
         if (order.status !== "CANCELLED") return false
-      }
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      const customerName = (order.createdBy?.name || order.createdBy?.email || "").toLowerCase()
-      const orderId = order.id.toLowerCase()
-      const productNames = order.items.map(item => item.product.name.toLowerCase()).join(" ")
-      
-      if (!customerName.includes(query) && !orderId.includes(query) && !productNames.includes(query)) {
-        return false
       }
     }
 
@@ -148,7 +154,7 @@ export default function OrdersPage() {
       toast.success("Order cancelled successfully")
       
       // Refresh the orders list to reflect updated status
-      await fetchOrders()
+      await fetchOrders(searchQuery || undefined)
     } catch (err: any) {
       toast.error(
         err.response?.data?.message ||
@@ -167,7 +173,7 @@ export default function OrdersPage() {
 
       toast.success("Order marked as completed")
 
-      await fetchOrders()
+      await fetchOrders(searchQuery || undefined)
     } catch (err: any) {
       toast.error(
         err.response?.data?.message ||
