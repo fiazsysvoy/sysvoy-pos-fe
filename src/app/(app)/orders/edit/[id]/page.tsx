@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ChevronLeft, Minus, Plus, Pencil, ScanLine } from "lucide-react"
+import { ChevronLeft, Minus, Plus, Pencil, ScanLine, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,6 +46,8 @@ export default function EditOrderPage() {
   const [loading, setLoading] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingOrder, setLoadingOrder] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const isInitialMount = useRef(true)
 
   const [isEditing, setIsEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -75,10 +77,18 @@ export default function EditOrderPage() {
     }
   }
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async (search?: string) => {
     try {
       setLoadingProducts(true)
-      const res = await api.get(`/api/products`)
+      const params = new URLSearchParams()
+      if (search) {
+        params.append("search", search)
+      }
+      // Set pageSize to max allowed (100) to get as many products as possible
+      params.append("pageSize", "100")
+      params.append("pageIndex", "0")
+      
+      const res = await api.get(`/api/products?${params.toString()}`)
 
       setProducts(res.data.data || [])
     } catch (err: any) {
@@ -87,7 +97,7 @@ export default function EditOrderPage() {
     } finally {
       setLoadingProducts(false)
     }
-  }
+  }, [])
 
   const fetchOrder = async () => {
     try {
@@ -117,11 +127,26 @@ export default function EditOrderPage() {
 
   useEffect(() => {
     fetchCategories()
-    fetchProducts()
     if (orderId) {
       fetchOrder()
     }
   }, [orderId])
+
+  // Effect for product search with debounce
+  useEffect(() => {
+    // Skip debounce on initial mount, fetch immediately
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      fetchProducts()
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetchProducts(searchQuery || undefined)
+    }, searchQuery ? 500 : 0) // No debounce when clearing search, 500ms when typing
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, fetchProducts])
 
   const filteredProducts = selectedCategory
     ? products.filter((p) => p.categoryId === selectedCategory)
@@ -199,16 +224,27 @@ export default function EditOrderPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-foreground hover:bg-accent"
-            onClick={() => router.push("/orders")}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-semibold">Edit Order</h1>
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-foreground hover:bg-accent"
+              onClick={() => router.push("/orders")}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-2xl font-semibold">Edit Order</h1>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-64 bg-card border-border text-card-foreground placeholder:text-muted-foreground"
+            />
+          </div>
         </div>
 
         {/* Categories Grid */}
