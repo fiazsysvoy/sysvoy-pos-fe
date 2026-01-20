@@ -28,11 +28,16 @@ const Users = () => {
   }
 
   const handleDelete = async (user: any) => {
-    if (!confirm("Delete this user?")) return
-    await api.delete(`/api/users/${user.id}`)
-    // refresh list
-    setUsers((prev) => prev.filter((u) => u.id !== user.id))
-    toast.success("Deleted")
+    try {
+      if (!confirm("Delete this user?")) return
+      await api.delete(`/api/users/${user.id}`)
+      // refresh list
+      setUsers((prev) => prev.filter((u) => u.id !== user.id))
+      toast.success("User deleted successfully.")
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error.response?.data?.message || "Failed to delete user")
+    }
   }
 
   useEffect(() => {

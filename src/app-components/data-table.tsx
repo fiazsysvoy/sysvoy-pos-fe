@@ -16,6 +16,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Edit, Eye, Trash } from "lucide-react"
+import { useUser } from "@/context/user-context"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -37,6 +38,7 @@ export function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
     })
+    const { user } = useUser();
 
     return (
         <div className="overflow-hidden rounded-md border">
@@ -72,20 +74,22 @@ export function DataTable<TData, TValue>({
                                     </TableCell>
                                 ))}
                                 <TableCell className="flex gap-2 justify-end">
-                                    <button
-                                        aria-label="Edit"
-                                        onClick={() => onEdit?.(row.original)}
-                                        className="p-2 rounded hover:bg-muted inline-flex items-center justify-center"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        aria-label="Delete"
-                                        onClick={() => onDelete?.(row.original)}
-                                        className="p-2 rounded hover:bg-red-600/10 text-red-600 inline-flex items-center justify-center"
-                                    >
-                                        <Trash className="w-4 h-4" />
-                                    </button>
+                                    {(row.original as any).email !== user?.email && (
+                                        <><button
+                                            aria-label="Edit"
+                                            onClick={() => onEdit?.(row.original)}
+                                            className="p-2 rounded hover:bg-muted inline-flex items-center justify-center"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                            <button
+                                                aria-label="Delete"
+                                                onClick={() => onDelete?.(row.original)}
+                                                className="p-2 rounded hover:bg-red-600/10 text-red-600 inline-flex items-center justify-center"
+                                            >
+                                                <Trash className="w-4 h-4" />
+                                            </button></>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))
