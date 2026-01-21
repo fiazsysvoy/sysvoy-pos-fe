@@ -34,8 +34,8 @@ export const LoginCard = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
         router.replace("/dashboard");
       } else {
         setIsLoading(false);
@@ -54,23 +54,24 @@ export const LoginCard = () => {
         password: data.password,
       });
 
-      if (res.data?.token) {
+      if (res.data?.accessToken) {
         const userStatus = res.data.status;
         if (userStatus === "UNVERIFIED_EMAIL") {
           toast.success("unverified email");
           setEmail(data.email);
-          
+
           // resending verification otp email
           await api.post("/api/auth/resend-verification", { email: data.email });
           router.replace("/verify-email");
 
         } else if (userStatus === "ORG_UNATTACHED") {
           toast.success("Login successful!");
-          setTempToken(res.data.token);
+          setTempToken(res.data.accessToken);
           // localStorage.setItem("token", res.data.token); 
           router.replace("/setup-business");
         } else if (userStatus === "ACTIVE") {
-          localStorage.setItem("token", res.data.token);
+          localStorage.setItem("accessToken", res.data.accessToken);
+          localStorage.setItem("refreshToken", res.data.refreshToken);
           toast.success("Login successful!");
           router.replace("/dashboard");
         }

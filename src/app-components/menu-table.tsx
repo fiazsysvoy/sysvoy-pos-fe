@@ -62,14 +62,8 @@ export default function MenuTable(
 
     try {
       setDeleting(true)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL
-      const token = localStorage.getItem("token")
 
-      await api.delete(`/api/products/${selectedProductId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      await api.delete(`/api/products/${selectedProductId}`)
 
       setProducts((prev) =>
         prev.filter((p) => p.id !== selectedProductId)

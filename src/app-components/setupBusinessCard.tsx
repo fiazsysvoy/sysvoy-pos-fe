@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import { useEffect, useState } from "react";
-import Link from "next/link"; // unused but consistent imports
 import { useAuthFlow } from "@/context/auth-flow-context";
 import Loader from "@/components/common/Loader";
 
@@ -47,7 +46,7 @@ export const SetupBusinessCard = () => {
 
     const onSubmit = async (data: SetupBusinessForm) => {
         try {
-            await api.post("/api/auth/create-organization", {
+            const response = await api.post("/api/auth/create-organization", {
                 name: data.name,
             }, {
                 headers: {
@@ -55,8 +54,13 @@ export const SetupBusinessCard = () => {
                 }
             });
 
+            if (response.status === 401) {
+                toast.error("Please login to continue. 401");
+                router.replace("/login");
+            }
+
             if (tempToken) {
-                localStorage.setItem("token", tempToken);
+                localStorage.setItem("accessToken", tempToken);
             }
             toast.success("Business setup complete!");
             router.push("/dashboard");

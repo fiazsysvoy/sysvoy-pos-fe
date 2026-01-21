@@ -48,12 +48,18 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         try {
-            setUser(null);
-            localStorage.clear();
-            router.replace("/login");
+            // invalidating refresh token on server side
+            await api.post("/api/auth/logout");
         } catch (error) {
-            console.error("Logout failed", error);
-            toast.error("Logout failed");
+            console.error("Server logout failed", error);
+            // Continue with local logout even if server call fails
+        } finally {
+            // Clear user state and tokens
+            setUser(null);
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+
+            router.replace("/login");
         }
     };
 

@@ -33,8 +33,8 @@ const VerifyEmailContent = () => {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const token = localStorage.getItem("token");
-            if (token) {
+            const accessToken = localStorage.getItem("accessToken");
+            if (accessToken) {
                 router.replace("/dashboard");
             } else if (!email) {
                 router.replace("/login");
@@ -61,8 +61,8 @@ const VerifyEmailContent = () => {
                 code: data.code,
             });
 
-            if (res.data?.token) {
-                setTempToken(res.data.token);
+            if (res.data?.accessToken) {
+                setTempToken(res.data.accessToken);
             }
 
             toast.success("Email verified successfully!");

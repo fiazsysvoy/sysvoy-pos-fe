@@ -39,8 +39,8 @@ export const SignupCard = () => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      if (token) {
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
         router.replace("/dashboard");
       } else {
         setIsLoading(false);
