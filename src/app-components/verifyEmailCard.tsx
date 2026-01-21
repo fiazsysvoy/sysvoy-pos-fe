@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import api from "@/lib/axios";
@@ -12,6 +12,7 @@ import { useEffect, useState, Suspense } from "react";
 import Loader from "@/components/common/Loader";
 import Link from "next/link";
 import { useAuthFlow } from "@/context/auth-flow-context";
+import OtpInput from "./OtpInput";
 
 interface VerifyEmailForm {
     code: string;
@@ -23,8 +24,8 @@ const VerifyEmailContent = () => {
     const { email, setTempToken } = useAuthFlow();
 
     const {
-        register,
         handleSubmit,
+        control,
         formState: { errors, isSubmitting },
     } = useForm<VerifyEmailForm>({
         mode: "onChange",
@@ -98,25 +99,31 @@ const VerifyEmailContent = () => {
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="flex flex-col gap-6">
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="code">Verification Code</Label>
-                                <Input
-                                    id="code"
-                                    type="number"
-                                    placeholder="Enter 6-digit code"
-                                    maxLength={6}
-                                    {...register("code", {
+                                <Label className="text-sm font-medium mb-2" htmlFor="code">Verification Code</Label>
+                                <Controller
+                                    name="code"
+                                    control={control}
+                                    rules={{
                                         required: "Verification code is required",
-                                        minLength: { value: 6, message: "Code must be 6 characters" },
-                                        maxLength: { value: 6, message: "Code must be 6 characters" },
-                                    })}
+                                        minLength: { value: 6, message: "Code must be 6 digits" },
+                                    }}
+                                    render={({ field }) => (
+                                        <OtpInput
+                                            value={field.value || ""}
+                                            onChange={field.onChange}
+                                        />
+                                    )}
                                 />
+
                                 {errors.code && (
-                                    <span className="text-red-500 text-sm">{errors.code.message}</span>
+                                    <span className="text-red-500 text-sm text-center">
+                                        {errors.code.message}
+                                    </span>
                                 )}
                             </div>
                         </div>
 
-                        <CardFooter className="flex-col gap-2 mt-4">
+                        <CardFooter className="flex-col gap-2 mt-2">
                             <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
                                 {isSubmitting ? "Verifying..." : "Verify Email"}
                             </Button>
