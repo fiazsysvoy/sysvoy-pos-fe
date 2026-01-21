@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Minus, Plus, Pencil, ScanLine, Search } from "lucide-react"
+import { ChevronLeft, Minus, Plus, Pencil, ScanLine, Search, CreditCard, Wallet, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import axios from "axios"
 import api from "@/lib/axios"
@@ -41,6 +43,9 @@ export default function NewOrderPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   // const [customerName, setCustomerName] = useState("Watson Joyce")
   const [orderName, setOrderName] = useState("Order");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "JAZZCASH" | "EASYPAISA">("CASH")
+  const [customerPhone, setCustomerPhone] = useState("")
+  const [processingPayment, setProcessingPayment] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -169,22 +174,40 @@ export default function NewOrderPage() {
       return
     }
 
+    // Validate gateway payment requirements
+    if (paymentMethod !== "CASH") {
+      if (!customerPhone || customerPhone.trim() === "") {
+        toast.error("Customer phone number is required for gateway payments")
+        return
+      }
+    }
+
     try {
+      setProcessingPayment(true)
+      
+      // Create order with payment method (payment will be processed later via Pay Bill button)
       const orderData = {
         name: orderName,
         items: cart.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
+        paymentMethod,
+        // Store customer phone for later payment processing
+        ...(paymentMethod !== "CASH" && customerPhone.trim() && {
+          customerPhone: customerPhone.trim(),
+        }),
       }
 
       await api.post(`/api/orders`, orderData)
 
-      toast.success("Order sent to kitchen successfully")
+      toast.success("Order created successfully")
       router.push("/orders")
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to create order")
       console.error(err)
+    } finally {
+      setProcessingPayment(false)
     }
   }
 
@@ -399,22 +422,66 @@ export default function NewOrderPage() {
         </div>
 
         {/* Payment Method */}
-        <div className="p-6 border-t border-border">
-          <h3 className="text-lg font-semibold mb-4 text-card-foreground">Payment Method</h3>
-          <div className="flex flex-col items-center justify-center bg-background p-6 rounded-lg mb-4 border border-border">
-            <div className="h-32 w-32 bg-muted rounded-lg flex items-center justify-center mb-2">
-              <ScanLine className="h-16 w-16 text-muted-foreground" />
-            </div>
-            <p className="text-foreground mt-2 font-semibold">Scan QR Code</p>
+        <div className="px-6 pt-6 pb-10 border-t border-border space-y-4">
+          <h3 className="text-lg font-semibold text-card-foreground">Payment Method</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="payment-method" className="text-sm text-muted-foreground">
+              Select Payment Method
+            </Label>
+            <Select value={paymentMethod} onValueChange={(value: "CASH" | "JAZZCASH" | "EASYPAISA") => setPaymentMethod(value)}>
+              <SelectTrigger id="payment-method" className="w-full bg-background border-border text-card-foreground ">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border z-[9999] shadow-xl">
+                <SelectItem value="CASH" className="bg-card hover:bg-accent">
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <Banknote className="h-4 w-4" />
+                    <span>Cash</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="JAZZCASH" className="bg-card hover:bg-accent">
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <CreditCard className="h-4 w-4" />
+                    <span>JazzCash</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="EASYPAISA" className="bg-card hover:bg-accent">
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    <Wallet className="h-4 w-4" />
+                    <span>EasyPaisa</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {paymentMethod !== "CASH" && (
+            <div className="space-y-3 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="customer-phone" className="text-sm text-muted-foreground">
+                  Customer Phone <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="customer-phone"
+                  type="tel"
+                  placeholder="03001234567"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="bg-background border-border text-card-foreground"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-6 border-t border-border">
+        <div className="px-6 pt-10 pb-6 border-t border-border">
           <Button
-            className="w-full bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black font-semibold py-6 text-lg"
+            className="w-full bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black font-semibold py-6 text-lg disabled:opacity-50"
             onClick={handleConfirmOrder}
+            disabled={processingPayment || cart.length === 0}
           >
-            Confirm Order
+            {processingPayment ? "Processing Payment..." : "Confirm Order"}
           </Button>
         </div>
       </div>
