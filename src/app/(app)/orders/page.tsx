@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Pencil, Trash2, CheckCircle2, Clock } from "lucide-react"
+import { Search, Pencil, Trash2, CheckCircle2, Clock, CreditCard, Wallet, Banknote, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,9 @@ interface Order {
   status: "IN_PROCESS" | "COMPLETED" | "CANCELLED"
   completedAt?: string | null
   cancelledAt?: string | null
+  paymentMethod?: "CASH" | "JAZZCASH" | "EASYPAISA" | null
+  paymentStatus?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | "REFUNDED" | null
+  transactionId?: string | null
   items: OrderItem[]
   createdBy?: {
     id: string
@@ -128,6 +131,34 @@ export default function OrdersPage() {
     }
   }
 
+  const getPaymentMethodIcon = (method?: string | null) => {
+    switch (method) {
+      case "JAZZCASH":
+        return CreditCard
+      case "EASYPAISA":
+        return Wallet
+      case "CASH":
+      default:
+        return Banknote
+    }
+  }
+
+  const getPaymentStatusBadge = (status?: string | null) => {
+    switch (status) {
+      case "COMPLETED":
+        return { text: "Paid", color: "bg-green-100 text-green-800" }
+      case "PROCESSING":
+        return { text: "Processing", color: "bg-yellow-100 text-yellow-800" }
+      case "FAILED":
+        return { text: "Failed", color: "bg-red-100 text-red-800" }
+      case "REFUNDED":
+        return { text: "Refunded", color: "bg-blue-100 text-blue-800" }
+      case "PENDING":
+      default:
+        return { text: "Pending", color: "bg-gray-100 text-gray-800" }
+    }
+  }
+
   // Filter orders by status only (search is now server-side)
   const filteredOrders = orders.filter((order) => {
     // Filter by status
@@ -165,20 +196,97 @@ export default function OrdersPage() {
     }
   }
 
-  const handleCompleteOrder = async (orderId: string) => {
+  const handleCompleteOrder = async (order: Order) => {
     if (typeof window === "undefined") return
 
     try {
-      await api.patch(`/api/orders/${orderId}`, { status: "COMPLETED" })
+      // First, ensure payment is completed
+      if (order.paymentStatus !== "COMPLETED") {
+        if (order.paymentMethod === "CASH" || !order.paymentMethod) {
+          // Cash payment - process directly
+          try {
+            const paymentResponse = await api.post(`/api/payments/initiate`, {
+              orderId: order.id,
+              paymentMethod: "CASH",
+              amount: order.totalAmount,
+            })
+            
+            const paymentData = paymentResponse.data.data
+            if (paymentData.status !== "COMPLETED") {
+              toast.error("Payment processing failed. Please try again.")
+              return
+            }
+            
+            toast.success("Cash payment processed")
+            // Refresh orders to get updated payment status
+            await fetchOrders(searchQuery || undefined)
+            return // Exit early, user can click Pay Bill again after refresh
+          } catch (cashErr: any) {
+            toast.error(cashErr.response?.data?.message || "Cash payment failed")
+            console.error("Cash payment error:", cashErr)
+            return
+          }
+        } else {
+          // Gateway payment - prompt for customer phone (not stored in DB)
+          const customerPhone = prompt(`Enter customer phone number for ${order.paymentMethod} payment:`)
+          if (!customerPhone || customerPhone.trim() === "") {
+            toast.error("Customer phone number is required")
+            return
+          }
 
-      toast.success("Order marked as completed")
+          try {
+            const paymentResponse = await api.post(`/api/payments/initiate`, {
+              orderId: order.id,
+              paymentMethod: order.paymentMethod,
+              amount: order.totalAmount,
+              customerPhone: customerPhone.trim(),
+              description: `Payment for order: ${order.name}`,
+            })
 
-      await fetchOrders(searchQuery || undefined)
+            const paymentData = paymentResponse.data.data
+
+            if (paymentData.status !== "COMPLETED") {
+              toast.warning(`Payment ${paymentData.status.toLowerCase()}. Please wait for payment confirmation.`)
+              // Refresh orders to get updated payment status
+              await fetchOrders(searchQuery || undefined)
+              return
+            }
+
+            if (paymentData.redirectUrl) {
+              toast.info("Payment initiated. Please complete payment in the gateway.")
+              // In production, you might want to: window.open(paymentData.redirectUrl, '_blank')
+              await fetchOrders(searchQuery || undefined)
+              return
+            } else {
+              toast.success(`Payment ${paymentData.status.toLowerCase()}`)
+            }
+          } catch (paymentErr: any) {
+            toast.error(paymentErr.response?.data?.message || "Payment processing failed")
+            console.error("Payment error:", paymentErr)
+            return
+          }
+        }
+      }
+
+      // Payment is completed, now mark order as completed
+      try {
+        await api.patch(`/api/orders/${order.id}`, { status: "COMPLETED" })
+        toast.success("Order completed successfully")
+        await fetchOrders(searchQuery || undefined)
+      } catch (completeErr: any) {
+        // If payment check fails on backend, show error
+        if (completeErr.response?.status === 400) {
+          toast.error(completeErr.response?.data?.message || "Payment must be completed first")
+        } else {
+          toast.error("Failed to complete order")
+        }
+        console.error("Complete order error:", completeErr)
+      }
     } catch (err: any) {
       toast.error(
         err.response?.data?.message ||
           err.response?.data?.errors?.[0] ||
-          "Failed to complete order",
+          "Failed to process order",
       )
       console.error(err)
     }
@@ -307,10 +415,10 @@ export default function OrdersPage() {
               return (
                 <Card
                   key={order.id}
-                  className="bg-card border-border p-6 flex flex-col h-[340px] w-full overflow-hidden"
+                  className="bg-card border-border p-6 flex flex-col h-[420px] w-full overflow-hidden"
                 >
                   {/* Header with Order Number and Customer Info */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-4 flex-1">
                       {/* Pink Order Number Badge */}
                       <div className="bg-[#FAC1D9] text-black text-2xl w-12 h-12 flex items-center justify-center rounded flex-shrink-0">
@@ -339,7 +447,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Date and Time (based on status) */}
-                  <div className="mb-4 flex justify-between">
+                  <div className="mb-3 flex justify-between">
                     <p className="text-sm text-muted-foreground">
                       {statusTimeLabel}: {date}
                     </p>
@@ -347,16 +455,16 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Items Table */}
-                  <div className="mb-4 flex-1 flex flex-col overflow-hidden">
-                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1 border-b border-border sticky top-0 bg-card z-10">
+                  <div className="mb-3 flex-1 flex flex-col min-h-0">
+                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1.5 border-b border-border">
                       <span>Qty</span>
                       <span>Items</span>
                       <span className="text-right">Price</span>
                     </div>
-                    <div className="space-y-1.5 mt-2 overflow-y-auto pr-1 h-[4.5rem]">
+                    <div className="space-y-2 mt-2 overflow-y-auto pr-1 flex-1 min-h-[120px]">
                       {order.items.map((item) => (
-                        <div key={item.id} className="grid grid-cols-3 gap-2 text-sm">
-                          <span className="text-card-foreground">{String(item.quantity).padStart(2, "0")}</span>
+                        <div key={item.id} className="grid grid-cols-3 gap-2 text-sm py-0.5">
+                          <span className="text-card-foreground font-medium">{String(item.quantity).padStart(2, "0")}</span>
                           <span className="text-card-foreground text-sm">{item.product.name}</span>
                           <span className="text-right font-semibold text-card-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                         </div>
@@ -364,8 +472,38 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
+                  {/* Payment Info */}
+                  {order.paymentMethod && (
+                    <div className="mb-2 pt-2 border-t border-border flex-shrink-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {(() => {
+                            const PaymentIcon = getPaymentMethodIcon(order.paymentMethod)
+                            return <PaymentIcon className="h-4 w-4 text-muted-foreground" />
+                          })()}
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {order.paymentMethod.toLowerCase()}
+                          </span>
+                        </div>
+                        {order.paymentStatus && (() => {
+                          const badge = getPaymentStatusBadge(order.paymentStatus)
+                          return (
+                            <span className={`text-xs px-2 py-0.5 rounded ${badge.color}`}>
+                              {badge.text}
+                            </span>
+                          )
+                        })()}
+                      </div>
+                      {order.transactionId && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
+                          TXN: {order.transactionId.slice(-8)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* SubTotal */}
-                  <div className="mb-4 pt-2 border-t border-border">
+                  <div className="mb-3 pt-2 border-t border-border flex-shrink-0">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm">SubTotal</span>
                       <span className="font-semibold text-base text-card-foreground">${order.totalAmount.toFixed(2)}</span>
@@ -374,7 +512,7 @@ export default function OrdersPage() {
 
                   {/* Action Buttons (only for IN_PROCESS orders) */}
                   {order.status === "IN_PROCESS" && (
-                    <div className="flex items-center gap-2 mt-auto">
+                    <div className="flex items-center gap-2 mt-auto flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -392,10 +530,19 @@ export default function OrdersPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                       <Button
-                        className="flex-1 bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black  h-10"
-                        onClick={() => handleCompleteOrder(order.id)}
+                        className={`flex-1 h-10 ${
+                          order.paymentStatus === "COMPLETED"
+                            ? "bg-green-600 hover:bg-green-700 text-white"
+                            : "bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black"
+                        }`}
+                        onClick={() => handleCompleteOrder(order)}
+                        disabled={order.paymentStatus === "PROCESSING"}
                       >
-                        Pay Bill
+                        {order.paymentStatus === "COMPLETED"
+                          ? "Complete Order"
+                          : order.paymentStatus === "PROCESSING"
+                          ? "Processing..."
+                          : "Pay Bill"}
                       </Button>
                     </div>
                   )}
