@@ -18,9 +18,10 @@ const DashBoard = () => {
         today: 0,
         thisWeek: 0,
         thisMonth: 0,
-        todayData: [] as Array<{ time: string; revenue: number }>,
-        weekData: [] as Array<{ date: string; revenue: number }>,
-        monthData: [] as Array<{ date: string; revenue: number; week?: number }>
+        todayData: [] as Array<{ time: string; revenue: number; sales: number }>,
+        weekData: [] as Array<{ date: string; revenue: number; sales: number }>,
+        monthData: [] as Array<{ date: string; revenue: number; sales: number; week?: number }>,
+        historicalMonthlyData: [] as Array<{ month: string; revenue: number; sales: number }>
     });
 
     const fetchOrders = async () => {
@@ -189,7 +190,12 @@ const DashBoard = () => {
                 />
             </div>
             <div className="p-6">
-                <OverviewChart />
+                <OverviewChart 
+                    todayData={revenueStats.todayData}
+                    weekData={revenueStats.weekData}
+                    monthData={revenueStats.monthData}
+                    historicalMonthlyData={revenueStats.historicalMonthlyData}
+                />
             </div>
         </>
     )
