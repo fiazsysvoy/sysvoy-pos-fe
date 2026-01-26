@@ -34,7 +34,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
         try {
             setIsLoading(true);
             if (editing) {
-                const res = await api.put(`${API_URL}api/users/${user.id}`, data);
+                const res = await api.put(`/api/users/${user.id}`, data);
                 if (res.status == 200) {
                     setOpen(false);
                     setEditing(false);
@@ -44,7 +44,7 @@ export function UserDialog({ open, setOpen, user, setEditing, editing, refetch, 
                 }
                 return;
             }
-            const res = await api.post(`${API_URL}api/users`, data);
+            const res = await api.post(`/api/users`, data);
             if (res.status == 201) {
                 setUser(null);
                 setOpen(false);
