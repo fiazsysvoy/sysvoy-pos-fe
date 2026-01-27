@@ -1,108 +1,114 @@
-"use client"
+"use client";
 
-import { Pencil, Trash2 } from "lucide-react"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-import ConfirmModal from "./ConfirmModal"
-import SingleProductSidebar from "./single-product-sidebar"
-import api from "@/lib/axios"
+import { Pencil, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import ConfirmModal from "./ConfirmModal";
+import SingleProductSidebar from "./single-product-sidebar";
+import api from "@/lib/axios";
 
 interface ProductImage {
-  publicId: string
-  url: string
+  publicId: string;
+  url: string;
 }
 
 interface Product {
-  id: string
-  name: string
-  description?: string
-  images: ProductImage[]
-  stock: number,
-  categoryId: string,
+  id: string;
+  name: string;
+  description?: string;
+  images: ProductImage[];
+  stock: number;
+  categoryId: string;
   category?: {
-    id: string,
-    name: string
-  }
-  price: number
-  available: boolean
+    id: string;
+    name: string;
+  };
+  price: number;
+  cost: number;
+  available: boolean;
 }
 
 interface Category {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 interface Props {
-  categories: Category[]
-  products: Product[]
-  loading: boolean
-  onSuccess: () => Promise<void>
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>
+  categories: Category[];
+  products: Product[];
+  loading: boolean;
+  onSuccess: () => Promise<void>;
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
 }
 
-export default function MenuTable(
-  {
-    categories, loading, products, setProducts, onSuccess
-  }: Props) {
-
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
-  const [openProductMenu, setOpenProductMenu] = useState(false)
-  const [editProduct, setEditProduct] = useState<null | Product>(null)
+export default function MenuTable({
+  categories,
+  loading,
+  products,
+  setProducts,
+  onSuccess,
+}: Props) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+  const [openProductMenu, setOpenProductMenu] = useState(false);
+  const [editProduct, setEditProduct] = useState<null | Product>(null);
 
   const handleEdit = (product: Product) => {
-    setEditProduct(product)
-    setOpenProductMenu(true)
-  }
+    setEditProduct(product);
+    setOpenProductMenu(true);
+  };
 
   const deleteProduct = async () => {
-    if (!selectedProductId) return
+    if (!selectedProductId) return;
 
     try {
-      setDeleting(true)
+      setDeleting(true);
 
-      await api.delete(`/api/products/${selectedProductId}`)
+      await api.delete(`/api/products/${selectedProductId}`);
 
-      setProducts((prev) =>
-        prev.filter((p) => p.id !== selectedProductId)
-      )
+      setProducts((prev) => prev.filter((p) => p.id !== selectedProductId));
 
-      toast.success("Product deleted successfully")
-      setShowConfirm(false)
-      setSelectedProductId(null)
+      toast.success("Product deleted successfully");
+      setShowConfirm(false);
+      setSelectedProductId(null);
       onSuccess();
     } catch (err) {
-      toast.error("Failed to delete product")
-      console.error(err)
+      toast.error("Failed to delete product");
+      console.error(err);
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   return (
     <div className="bg-zinc-900 rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-6 px-4 py-3 text-sm text-black dark:text-zinc-400 bg-zinc-400 dark:bg-zinc-800">
+      <div className="grid grid-cols-7 px-4 py-3 text-sm text-black dark:text-zinc-400 bg-zinc-400 dark:bg-zinc-800">
         {/* <span></span> */}
         <span>Product</span>
         <span className="col-span-1">Product Name</span>
         {/* <span>Item ID</span> */}
         <span>Stock</span>
         <span>Category</span>
+        <span>Cost</span>
         <span>Price</span>
         <span>Availability</span>
       </div>
 
       {loading ? (
-        <p className="p-4 text-center text-black dark:text-zinc-400">Loading products...</p>
+        <p className="p-4 text-center text-black dark:text-zinc-400">
+          Loading products...
+        </p>
       ) : (
         products.map((product) => (
           <div
             key={product.id}
             className="
-              grid grid-cols-6 items-center px-4 py-4
+              grid grid-cols-7 items-center px-4 py-4
               text-black dark:text-white
               border-t border-zinc-200
               bg-zinc-200 dark:bg-black 
@@ -117,9 +123,7 @@ export default function MenuTable(
               className="h-8 w-8 object-cover rounded"
             />
             <div className="col-span-1 min-w-0">
-              <p className="font-medium truncate">
-                {product.name}
-              </p>
+              <p className="font-medium truncate">{product.name}</p>
 
               <p className="text-sm text-zinc-400 truncate">
                 {product.description}
@@ -129,23 +133,28 @@ export default function MenuTable(
             {/* <span>#{product.id}</span> */}
             <span>{product.stock} items</span>
             <span>{product.category?.name || "-"}</span>
+            <span>${product.cost.toFixed(2)}</span>
             <span>${product.price.toFixed(2)}</span>
 
             <div className="flex items-center justify-between">
               <span
-                className={`text-sm font-bold ${product.available ? "text-green-400" : "text-red-400"
-                  }`}
+                className={`text-sm font-bold ${
+                  product.available ? "text-green-400" : "text-red-400"
+                }`}
               >
                 {product.stock > 0 ? "In Stock" : "Out of Stock"}
               </span>
 
               <div className="flex gap-3 items-center">
-                <Pencil className="h-4 w-4 cursor-pointer" onClick={() => handleEdit(product)} />
+                <Pencil
+                  className="h-4 w-4 cursor-pointer"
+                  onClick={() => handleEdit(product)}
+                />
                 <Trash2
                   className="h-4 w-4 text-red-500 cursor-pointer"
                   onClick={() => {
-                    setSelectedProductId(product.id)
-                    setShowConfirm(true)
+                    setSelectedProductId(product.id);
+                    setShowConfirm(true);
                   }}
                 />
 
@@ -156,8 +165,8 @@ export default function MenuTable(
                   confirmText="Yes"
                   loading={deleting}
                   onCancel={() => {
-                    setShowConfirm(false)
-                    setSelectedProductId(null)
+                    setShowConfirm(false);
+                    setSelectedProductId(null);
                   }}
                   onConfirm={deleteProduct}
                 />
@@ -167,12 +176,13 @@ export default function MenuTable(
         ))
       )}
       {openProductMenu && editProduct && (
-        <SingleProductSidebar categories={categories}
+        <SingleProductSidebar
+          categories={categories}
           onClose={() => setOpenProductMenu(false)}
           product={editProduct}
           onSuccess={onSuccess}
         />
       )}
     </div>
-  )
+  );
 }

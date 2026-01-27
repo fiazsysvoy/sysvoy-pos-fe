@@ -26,6 +26,7 @@ interface FinancialStats {
   summary: {
     totalRevenue: number;
     totalOrders: number;
+    totalCosts: number;
     completedOrders: number;
     cancelledOrders: number;
     inProcessOrders: number;
@@ -62,6 +63,8 @@ interface FinancialStats {
     category: string;
     revenue: number;
     quantity: number;
+    profit: number;
+    profitMargin: number;
   }>;
   comparison: {
     previousPeriodRevenue: number;
@@ -96,6 +99,7 @@ export default function FinancialPage() {
         groupBy: "day",
       });
       const res = await api.get(`/api/financial/stats?${params.toString()}`);
+      console.log(res.data.data);
       setStats(res.data.data);
     } catch (err: any) {
       toast.error(
@@ -221,7 +225,7 @@ export default function FinancialPage() {
           ) : stats ? (
             <>
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -242,6 +246,19 @@ export default function FinancialPage() {
                         Total Orders
                       </p>
                       <p className="text-2xl font-bold">{totalOrders}</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-pink-500" />
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Total Costs
+                      </p>
+                      <p className="text-2xl font-bold">
+                        ${(stats?.summary.totalCosts ?? 0).toFixed(2)}
+                      </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-pink-500" />
                   </div>
@@ -389,6 +406,8 @@ export default function FinancialPage() {
                         <th className="text-left p-2">Top Selling Food</th>
                         <th className="text-center p-2">Quantity Sold</th>
                         <th className="text-right p-2">Sell Price</th>
+                        <th className="text-right p-2">Profit</th>
+                        <th className="text-right p-2">Profit Margin</th>
                         <th className="text-right p-2">Total Revenue</th>
                       </tr>
                     </thead>
@@ -411,6 +430,16 @@ export default function FinancialPage() {
                             ${(product.revenue / product.quantity).toFixed(2)}
                           </td>
 
+                          {/* Profit */}
+                          <td className="p-2 text-right">
+                            ${product.profit.toFixed(2)}
+                          </td>
+
+                          {/* Profit Margin */}
+                          <td className="p-2 text-right">
+                            {product.profitMargin.toFixed(2)}%
+                          </td>
+
                           {/* RIGHT – fixes extra right spacing visually */}
                           <td className="p-2 text-right">
                             ${product.revenue.toLocaleString()}
@@ -421,7 +450,7 @@ export default function FinancialPage() {
                       {stats.topProducts.length === 0 && (
                         <tr>
                           <td
-                            colSpan={5}
+                            colSpan={7}
                             className="p-4 text-center text-muted-foreground"
                           >
                             No products found

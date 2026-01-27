@@ -35,13 +35,15 @@ interface Category {
 export default function MenuPage() {
   const [openProductMenu, setOpenProductMenu] = useState(false);
   const [openCategorySidebar, setOpenCategorySidebar] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<
+    Category | undefined
+  >();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
-  
+
   // Search states
   const [categorySearch, setCategorySearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -55,6 +57,7 @@ export default function MenuPage() {
         params.append("search", searchQuery);
       }
       const res = await api.get(`/api/products?${params.toString()}`);
+      console.log(res.data.data);
       setProducts(res.data.data);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to fetch products");
@@ -106,18 +109,24 @@ export default function MenuPage() {
 
   // Effect for category search with debounce
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchCategories(categorySearch || undefined);
-    }, categorySearch ? 500 : 0); // No debounce when clearing search, 500ms when typing
+    const timeoutId = setTimeout(
+      () => {
+        fetchCategories(categorySearch || undefined);
+      },
+      categorySearch ? 500 : 0,
+    ); // No debounce when clearing search, 500ms when typing
 
     return () => clearTimeout(timeoutId);
   }, [categorySearch]);
 
   // Effect for product search with debounce
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchProducts(productSearch || undefined);
-    }, productSearch ? 500 : 0); // No debounce when clearing search, 500ms when typing
+    const timeoutId = setTimeout(
+      () => {
+        fetchProducts(productSearch || undefined);
+      },
+      productSearch ? 500 : 0,
+    ); // No debounce when clearing search, 500ms when typing
 
     return () => clearTimeout(timeoutId);
   }, [productSearch]);
@@ -187,7 +196,7 @@ export default function MenuPage() {
           products={products}
           setProducts={setProducts}
           loading={loadingProducts}
-          onSuccess={async ()=>{ 
+          onSuccess={async () => {
             await fetchCategories(categorySearch || undefined);
             await fetchProducts(productSearch || undefined);
           }}
@@ -202,7 +211,7 @@ export default function MenuPage() {
             setSelectedCategory(undefined);
           }}
           category={selectedCategory}
-          onSuccess={()=>{
+          onSuccess={() => {
             fetchCategories(categorySearch || undefined);
             fetchProducts(productSearch || undefined);
           }}
@@ -214,7 +223,7 @@ export default function MenuPage() {
         <SingleProductSidebar
           categories={categories}
           onClose={() => setOpenProductMenu(false)}
-          onSuccess={async ()=>{
+          onSuccess={async () => {
             await fetchCategories(categorySearch || undefined);
             await fetchProducts(productSearch || undefined);
           }}
