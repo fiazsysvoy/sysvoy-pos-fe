@@ -1,110 +1,117 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { ChevronLeft, Minus, Plus, Pencil, ScanLine, Search } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { toast } from "sonner"
-import api from "@/lib/axios"
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import {
+  ChevronLeft,
+  Minus,
+  Plus,
+  Pencil,
+  ScanLine,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import api from "@/lib/axios";
 
 interface Category {
-  id: string
-  name: string
-  itemsCount?: number
-  imageUrl?: string
+  id: string;
+  name: string;
+  itemsCount?: number;
+  imageUrl?: string;
 }
 
 interface Product {
-  id: string
-  name: string
-  price: number
-  categoryId: string
-  images?: { url: string; publicId: string }[]
+  id: string;
+  name: string;
+  price: number;
+  categoryId: string;
+  images?: { url: string; publicId: string }[];
 }
 
 interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  productId: string
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  productId: string;
 }
 
 export default function EditOrderPage() {
-  const router = useRouter()
-  const params = useParams()
-  const orderId = params.id as string
+  const router = useRouter();
+  const params = useParams();
+  const orderId = params.id as string;
 
-  const [categories, setCategories] = useState<Category[]>([])
-  const [products, setProducts] = useState<Product[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
   // const [customerName, setCustomerName] = useState("Watson Joyce")
-  const [orderName, setOrderName] = useState("Order")
-  const [loading, setLoading] = useState(false)
-  const [loadingProducts, setLoadingProducts] = useState(false)
-  const [loadingOrder, setLoadingOrder] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const isInitialMount = useRef(true)
+  const [orderName, setOrderName] = useState("Order");
+  const [loading, setLoading] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingOrder, setLoadingOrder] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const isInitialMount = useRef(true);
 
-  const [isEditing, setIsEditing] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
   const fetchCategories = async () => {
     try {
-      setLoading(true)
-      const res = await api.get(`/api/categories`)
+      setLoading(true);
+      const res = await api.get(`/api/categories`);
 
       const data: Category[] = res.data.data.map((cat: any) => ({
         id: cat.id,
         name: cat.name,
         itemsCount: cat.itemsCount || 0,
         imageUrl: cat.imageUrl,
-      }))
+      }));
 
-      setCategories(data)
+      setCategories(data);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to fetch categories")
-      console.error(err)
+      toast.error(err.response?.data?.message || "Failed to fetch categories");
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const fetchProducts = useCallback(async (search?: string) => {
     try {
-      setLoadingProducts(true)
-      const params = new URLSearchParams()
+      setLoadingProducts(true);
+      const params = new URLSearchParams();
       if (search) {
-        params.append("search", search)
+        params.append("search", search);
       }
       // Set pageSize to max allowed (100) to get as many products as possible
-      params.append("pageSize", "100")
-      params.append("pageIndex", "0")
-      
-      const res = await api.get(`/api/products?${params.toString()}`)
+      params.append("pageSize", "100");
+      params.append("pageIndex", "0");
 
-      setProducts(res.data.data || [])
+      const res = await api.get(`/api/products?${params.toString()}`);
+
+      setProducts(res.data.data || []);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to fetch products")
-      console.error(err)
+      toast.error(err.response?.data?.message || "Failed to fetch products");
+      console.error(err);
     } finally {
-      setLoadingProducts(false)
+      setLoadingProducts(false);
     }
-  }, [])
+  }, []);
 
   const fetchOrder = async () => {
     try {
-      setLoadingOrder(true)
-      const res = await api.get(`/api/orders/${orderId}`)
+      setLoadingOrder(true);
+      const res = await api.get(`/api/orders/${orderId}`);
 
-      const order = res.data.data
+      const order = res.data.data;
       if (order) {
         // Populate cart with existing order items
         const orderItems: CartItem[] = order.items.map((item: any) => ({
@@ -113,65 +120,70 @@ export default function EditOrderPage() {
           price: item.price,
           quantity: item.quantity,
           productId: item.productId,
-        }))
+        }));
         setOrderName(order.name);
-        setCart(orderItems)
+        setCart(orderItems);
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to fetch order")
-      console.error(err)
+      toast.error(err.response?.data?.message || "Failed to fetch order");
+      console.error(err);
     } finally {
-      setLoadingOrder(false)
+      setLoadingOrder(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchCategories()
+    fetchCategories();
     if (orderId) {
-      fetchOrder()
+      fetchOrder();
     }
-  }, [orderId])
+  }, [orderId]);
 
   // Effect for product search with debounce
   useEffect(() => {
     // Skip debounce on initial mount, fetch immediately
     if (isInitialMount.current) {
-      isInitialMount.current = false
-      fetchProducts()
-      return
+      isInitialMount.current = false;
+      fetchProducts();
+      return;
     }
 
-    const timeoutId = setTimeout(() => {
-      fetchProducts(searchQuery || undefined)
-    }, searchQuery ? 500 : 0) // No debounce when clearing search, 500ms when typing
+    const timeoutId = setTimeout(
+      () => {
+        fetchProducts(searchQuery || undefined);
+      },
+      searchQuery ? 500 : 0,
+    ); // No debounce when clearing search, 500ms when typing
 
-    return () => clearTimeout(timeoutId)
-  }, [searchQuery, fetchProducts])
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, fetchProducts]);
 
   const filteredProducts = selectedCategory
     ? products.filter((p) => p.categoryId === selectedCategory)
-    : products
+    : products;
 
   const updateQuantity = (productId: string, change: number) => {
-    const product = products.find((p) => p.id === productId)
-    if (!product) return
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
 
-    const existingItem = cart.find((item) => item.productId === productId)
-    const currentCartQuantity = existingItem ? existingItem.quantity : 0
-    const newQuantity = Math.max(0, currentCartQuantity + change)
+    const existingItem = cart.find((item) => item.productId === productId);
+    const currentCartQuantity = existingItem ? existingItem.quantity : 0;
+    const newQuantity = Math.max(0, currentCartQuantity + change);
 
     if (newQuantity === 0) {
       // Remove from cart if quantity reaches 0
-      setCart((prevCart) => prevCart.filter((item) => item.productId !== productId))
+      setCart((prevCart) =>
+        prevCart.filter((item) => item.productId !== productId),
+      );
     } else if (existingItem) {
       // Update existing cart item
       setCart((prevCart) =>
         prevCart.map((item) =>
           item.productId === productId
             ? { ...item, quantity: newQuantity }
-            : item
-        )
-      )
+            : item,
+        ),
+      );
     } else {
       // Add new item to cart
       setCart((prevCart) => [
@@ -183,22 +195,24 @@ export default function EditOrderPage() {
           quantity: newQuantity,
           productId: product.id,
         },
-      ])
+      ]);
     }
-  }
+  };
 
   const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.productId !== productId))
-  }
+    setCart((prev) => prev.filter((item) => item.productId !== productId));
+  };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const tax = subtotal * 0.05
-  const total = subtotal + tax
+  const subtotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+  const total = subtotal;
 
   const handleUpdateOrder = async () => {
     if (cart.length === 0) {
-      toast.error("Please add items to the order")
-      return
+      toast.error("Please add items to the order");
+      return;
     }
 
     try {
@@ -208,16 +222,16 @@ export default function EditOrderPage() {
           productId: item.productId,
           quantity: item.quantity,
         })),
-      }
-      await api.put(`/api/orders/${orderId}`, orderData)
+      };
+      await api.put(`/api/orders/${orderId}`, orderData);
 
-      toast.success("Order updated successfully")
-      router.push("/orders")
+      toast.success("Order updated successfully");
+      router.push("/orders");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to update order")
-      console.error(err)
+      toast.error(err.response?.data?.message || "Failed to update order");
+      console.error(err);
     }
-  }
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background text-foreground">
@@ -255,8 +269,11 @@ export default function EditOrderPage() {
             categories.map((category) => (
               <Card
                 key={category.id}
-                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${selectedCategory === category.id ? "ring-2 ring-[#FAC1D9]" : ""
-                  }`}
+                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${
+                  selectedCategory === category.id
+                    ? "ring-2 ring-[#FAC1D9]"
+                    : ""
+                }`}
                 onClick={() => setSelectedCategory(category.id)}
               >
                 <div className="p-4 flex flex-col items-center justify-center h-full">
@@ -272,9 +289,15 @@ export default function EditOrderPage() {
                     )}
                   </div>
                   <div className="flex-1 flex flex-col justify-end w-full">
-                    <h3 className="text-sm font-semibold mb-0.5 text-card-foreground text-left w-full">{category.name}</h3>
+                    <h3 className="text-sm font-semibold mb-0.5 text-card-foreground text-left w-full">
+                      {category.name}
+                    </h3>
                     <p className="text-xs text-muted-foreground text-left w-full">
-                      {products.filter((p) => p.categoryId === category.id).length} items
+                      {
+                        products.filter((p) => p.categoryId === category.id)
+                          .length
+                      }{" "}
+                      items
                     </p>
                   </div>
                 </div>
@@ -283,50 +306,50 @@ export default function EditOrderPage() {
           )}
         </div>
 
-        {/* Product Items Grid */}
-        <div className="grid grid-cols-4 gap-6 overflow-y-auto flex-1">
-          {loadingProducts ? (
-            <p className="text-muted-foreground">Loading products...</p>
-          ) : (
-            filteredProducts.map((product) => {
-              const cartItem = cart.find((item) => item.productId === product.id)
-              const quantity = cartItem ? cartItem.quantity : 0
-              return (
-                <Card key={product.id} className="bg-card border-0 h-[170px] flex flex-col overflow-hidden">
-                  <div className="p-3 flex flex-col h-full justify-between">
-                    <div className="flex-1">
-                      <div className="text-[10px] text-card-foreground mb-1.5">Order → Kitchen</div>
-                      <h3 className="text-sm font-semibold mb-1.5 text-card-foreground line-clamp-2 leading-tight">{product.name}</h3>
-                      <p className="text-base font-bold text-card-foreground">
-                        ${product.price.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-card-foreground hover:bg-accent flex-shrink-0 rounded-full"
-                        onClick={() => updateQuantity(product.id, -1)}
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </Button>
-                      <span className="text-card-foreground font-semibold text-sm">
-                        {String(quantity).padStart(2, "0")}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-card-foreground hover:bg-accent flex-shrink-0 rounded-full bg-accent/50"
-                        onClick={() => updateQuantity(product.id, 1)}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+        {/* PRODUCTS GRID (COMPACT) */}
+        <div className="grid grid-cols-4 gap-x-4 gap-y-4 overflow-y-auto flex-1">
+          {filteredProducts.map((product) => {
+            const qty =
+              cart.find((c) => c.productId === product.id)?.quantity || 0;
+
+            return (
+              <Card key={product.id} className="border shadow-sm">
+                <div className="p-3 flex flex-col h-full min-h-[150px]">
+                  <div className="flex-1">
+                    <div className="text-[10px] mb-1">Order → Kitchen</div>
+                    <h3 className="text-sm font-semibold line-clamp-2">
+                      {product.name}
+                    </h3>
+                    <p className="text-base font-bold">
+                      ${product.price.toFixed(2)}
+                    </p>
                   </div>
-                </Card>
-              )
-            })
-          )}
+
+                  <div className="flex justify-between items-center mt-auto">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => updateQuantity(product.id, -1)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+
+                    <span className="font-semibold">
+                      {String(qty).padStart(2, "0")}
+                    </span>
+
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => updateQuantity(product.id, 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
@@ -342,13 +365,16 @@ export default function EditOrderPage() {
                 onChange={(e) => setOrderName(e.target.value)}
                 onBlur={handleSave}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSave()
-                  if (e.key === "Escape") setIsEditing(false)
+                  if (e.key === "Enter") handleSave();
+                  if (e.key === "Escape") setIsEditing(false);
                 }}
                 className="text-2xl font-bold bg-transparent border-b border-border outline-none text-card-foreground"
               />
             ) : (
-              <h2 className="text-2xl font-bold text-card-foreground" onClick={() => setIsEditing(true)}>
+              <h2
+                className="text-2xl font-bold text-card-foreground"
+                onClick={() => setIsEditing(true)}
+              >
                 {orderName}
               </h2>
             )}
@@ -395,7 +421,9 @@ export default function EditOrderPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-card-foreground">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="font-semibold text-card-foreground">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </p>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -408,31 +436,28 @@ export default function EditOrderPage() {
               </div>
             ))}
             {cart.length === 0 && (
-              <p className="text-muted-foreground text-center py-8">No items in cart</p>
+              <p className="text-muted-foreground text-center py-8">
+                No items in cart
+              </p>
             )}
           </div>
         </div>
 
         {/* Bill Summary */}
         <div className="p-6 border-t border-border space-y-3">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="font-semibold text-card-foreground">${subtotal.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Tax 5%</span>
-            <span className="font-semibold text-card-foreground">${tax.toFixed(2)}</span>
-          </div>
-          <div className="border-t border-dashed border-border my-3"></div>
           <div className="flex justify-between text-xl">
             <span className="font-bold text-card-foreground">Total</span>
-            <span className="font-bold text-card-foreground">${total.toFixed(2)}</span>
+            <span className="font-bold text-card-foreground">
+              ${total.toFixed(2)}
+            </span>
           </div>
         </div>
 
         {/* Payment Method */}
         <div className="p-6 border-t border-border">
-          <h3 className="text-lg font-semibold mb-4 text-card-foreground">Payment Method</h3>
+          <h3 className="text-lg font-semibold mb-4 text-card-foreground">
+            Payment Method
+          </h3>
           <div className="flex flex-col items-center justify-center bg-background p-6 rounded-lg mb-4 border border-border">
             <div className="h-32 w-32 bg-muted rounded-lg flex items-center justify-center mb-2">
               <ScanLine className="h-16 w-16 text-muted-foreground" />
@@ -452,6 +477,5 @@ export default function EditOrderPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

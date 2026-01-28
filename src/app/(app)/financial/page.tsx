@@ -13,14 +13,20 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Legend,
 } from "recharts";
-import { Calendar, TrendingUp, DollarSign } from "lucide-react";
+import { Calendar, TrendingUp, DollarSign, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface FinancialStats {
   summary: {
@@ -68,8 +74,13 @@ interface FinancialStats {
   }>;
   comparison: {
     previousPeriodRevenue: number;
-    growthPercentage: number;
     previousPeriodOrders: number;
+    revenueGrowthPercentage: number;
+    ordersGrowthPercentage: number;
+    sameWeekLastMonthRevenue: number;
+    sameWeekLastMonthOrders: number;
+    revenueVsLastMonthPercentage: number;
+    ordersVsLastMonthPercentage: number;
   };
 }
 
@@ -99,7 +110,6 @@ export default function FinancialPage() {
         groupBy: "day",
       });
       const res = await api.get(`/api/financial/stats?${params.toString()}`);
-      console.log(res.data.data);
       setStats(res.data.data);
     } catch (err: any) {
       toast.error(
@@ -178,6 +188,31 @@ export default function FinancialPage() {
 
   const totalRevenue = stats?.summary.totalRevenue || 0;
   const totalOrders = stats?.summary.totalOrders || 0;
+
+  // Calculate date range for comparison labels
+  const dateRangeDays = useMemo(() => {
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    const diffTime = Math.abs(to.getTime() - from.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }, [fromDate, toDate]);
+
+  // Format dates for tooltip
+  const formatDateForTooltip = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Check if previous period had data (edge case handling)
+  const hasPreviousPeriodData =
+    stats?.comparison.previousPeriodRevenue !== undefined &&
+    stats.comparison.previousPeriodRevenue > 0 &&
+    stats.comparison.previousPeriodOrders > 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -305,7 +340,7 @@ export default function FinancialPage() {
                             />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <RechartsTooltip />
                         <text
                           x="50%"
                           y="45%"
@@ -347,47 +382,110 @@ export default function FinancialPage() {
 
                 {/* Line Chart */}
                 <Card className="p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Revenue Trend</h3>
-                    <div className="flex gap-2">
-                      <Button
-                        variant={
-                          selectedStatusTab === "COMPLETED"
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setSelectedStatusTab("COMPLETED")}
-                      >
-                        Completed
-                      </Button>
-                      <Button
-                        variant={
-                          selectedStatusTab === "CANCELLED"
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setSelectedStatusTab("CANCELLED")}
-                      >
-                        Cancelled
-                      </Button>
-                      <Button
-                        variant={
-                          selectedStatusTab === "IN_PROCESS"
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => setSelectedStatusTab("IN_PROCESS")}
-                      >
-                        In Process
-                      </Button>
+                  <div className="flex flex-col gap-2 mb-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Revenue Trend</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={
+                            selectedStatusTab === "COMPLETED"
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setSelectedStatusTab("COMPLETED")}
+                        >
+                          Completed
+                        </Button>
+                        <Button
+                          variant={
+                            selectedStatusTab === "CANCELLED"
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setSelectedStatusTab("CANCELLED")}
+                        >
+                          Cancelled
+                        </Button>
+                        <Button
+                          variant={
+                            selectedStatusTab === "IN_PROCESS"
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setSelectedStatusTab("IN_PROCESS")}
+                        >
+                          In Process
+                        </Button>
+                      </div>
                     </div>
+                    {stats.comparison && (
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] md:text-xs pb-3 border-b">
+                        <span className="text-muted-foreground whitespace-nowrap">
+                          vs previous {dateRangeDays} day
+                          {dateRangeDays !== 1 ? "s" : ""}:
+                        </span>
+                        {hasPreviousPeriodData &&
+                        !isNaN(stats.comparison.revenueGrowthPercentage) ? (
+                          <span
+                            className={`font-semibold flex items-center gap-1 whitespace-nowrap ${
+                              stats.comparison.revenueGrowthPercentage >= 0
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            Revenue{" "}
+                            {stats.comparison.revenueGrowthPercentage >= 0 ? (
+                              <span>↑</span>
+                            ) : (
+                              <span>↓</span>
+                            )}{" "}
+                            {Math.abs(
+                              stats.comparison.revenueGrowthPercentage,
+                            ).toFixed(1)}
+                            %
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-[10px] md:text-xs whitespace-nowrap">
+                            Revenue: N/A
+                          </span>
+                        )}
+                        {hasPreviousPeriodData &&
+                        !isNaN(stats.comparison.ordersGrowthPercentage) ? (
+                          <span
+                            className={`font-semibold flex items-center gap-1 whitespace-nowrap ${
+                              stats.comparison.ordersGrowthPercentage >= 0
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            Orders{" "}
+                            {stats.comparison.ordersGrowthPercentage >= 0 ? (
+                              <span>↑</span>
+                            ) : (
+                              <span>↓</span>
+                            )}{" "}
+                            {Math.abs(
+                              stats.comparison.ordersGrowthPercentage,
+                            ).toFixed(1)}
+                            %
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-[10px] md:text-xs whitespace-nowrap">
+                            Orders: N/A
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={lineChartData}>
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(255, 255, 255, 0.1)"
+                      />
                       <XAxis
                         dataKey="date"
                         tick={{ fontSize: 12 }}
@@ -396,7 +494,7 @@ export default function FinancialPage() {
                         height={80}
                       />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <Tooltip />
+                      <RechartsTooltip />
                       <Line
                         type="monotone"
                         dataKey="revenue"
