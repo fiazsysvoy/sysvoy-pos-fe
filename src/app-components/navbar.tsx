@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Bell, User, Home, ChevronRight, Sun, Moon } from "lucide-react"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { useTheme } from "next-themes"
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Bell, User, Home, ChevronRight, Sun, Moon } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useTheme } from "next-themes";
 
 export default function Navbar() {
-  const pathname = usePathname() || "/"
-  const segments = pathname.split("/").filter(Boolean)
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const currentTheme = resolvedTheme || theme
+  const pathname = usePathname() || "/";
+  const segments = pathname.split("/").filter(Boolean);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const currentTheme = resolvedTheme || theme;
 
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
-    return <div className="w-9 h-9" />
+    return <div className="w-9 h-9" />;
   }
 
   return (
@@ -32,16 +32,19 @@ export default function Navbar() {
           <span>Home</span>
         </Link> */}
         {segments.map((seg, idx) => {
-          const href = "/" + segments.slice(0, idx + 1).join("/")
-          const label = decodeURIComponent(seg).replace(/-/g, " ")
+          const href = "/" + segments.slice(0, idx + 1).join("/");
+          const label = decodeURIComponent(seg).replace(/-/g, " ");
           return (
             <div key={idx} className="flex items-center">
               <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground" />
-              <Link href={href} className="capitalize text-sm text-foreground hover:underline">
+              <Link
+                href={href}
+                className="capitalize text-sm text-foreground hover:underline"
+              >
                 {label}
               </Link>
             </div>
-          )
+          );
         })}
       </nav>
 
@@ -55,8 +58,10 @@ export default function Navbar() {
           {currentTheme === "dark" ? (
             <Sun className="w-5 h-5 text-yellow-500 group-hover:text-yellow-400" />
           ) : (
-            <Moon className="w-5 h-5 text-gray-800 dark:text-gray-200
-                            group-hover:text-gray-900 dark:group-hover:text-white" />
+            <Moon
+              className="w-5 h-5 text-gray-800 dark:text-gray-200
+                            group-hover:text-gray-900 dark:group-hover:text-white"
+            />
           )}
         </button>
 
@@ -71,5 +76,5 @@ export default function Navbar() {
         </div>
       </div>
     </div>
-  )
+  );
 }

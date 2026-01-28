@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
+import { useState, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -9,77 +9,88 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-} from "recharts"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+} from "recharts";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-type TimePeriod = "Monthly" | "Daily" | "Weekly"
+type TimePeriod = "Monthly" | "Daily" | "Weekly";
 
 interface ChartDataPoint {
-  month?: string
-  date?: string
-  time?: string
-  revenue: number
-  sales: number
+  month?: string;
+  date?: string;
+  time?: string;
+  revenue: number;
+  sales: number;
 }
 
 interface OverviewChartProps {
-  todayData?: Array<{ time: string; revenue: number; sales: number }>
-  weekData?: Array<{ date: string; revenue: number; sales: number }>
-  monthData?: Array<{ date: string; revenue: number; sales: number }>
-  historicalMonthlyData?: Array<{ month: string; revenue: number; sales: number }>
+  todayData?: Array<{ time: string; revenue: number; sales: number }>;
+  weekData?: Array<{ date: string; revenue: number; sales: number }>;
+  monthData?: Array<{ date: string; revenue: number; sales: number }>;
+  historicalMonthlyData?: Array<{
+    month: string;
+    revenue: number;
+    sales: number;
+  }>;
 }
 
-export function OverviewChart({ 
-  todayData = [], 
-  weekData = [], 
+export function OverviewChart({
+  todayData = [],
+  weekData = [],
   monthData = [],
-  historicalMonthlyData = []
+  historicalMonthlyData = [],
 }: OverviewChartProps) {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("Monthly")
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("Monthly");
 
   // Transform data based on selected time period
   const chartData = useMemo(() => {
     if (timePeriod === "Monthly") {
       // Use historical monthly data (last 12 months)
-      return historicalMonthlyData.map(item => ({
+      return historicalMonthlyData.map((item) => ({
         month: item.month,
         revenue: item.revenue,
         sales: item.sales,
-      }))
+      }));
     } else if (timePeriod === "Weekly") {
       // Use week data (daily breakdown of current week)
-      return weekData.map(item => {
-        const date = new Date(item.date)
-        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' })
-        const dayNum = date.getDate()
+      return weekData.map((item) => {
+        const date = new Date(item.date);
+        const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
+        const dayNum = date.getDate();
         return {
           month: `${dayName} ${dayNum}`,
           revenue: item.revenue,
           sales: item.sales,
-        }
-      })
+        };
+      });
     } else {
       // Daily - use today's hourly data
-      return todayData.map(item => {
-        const hour = parseInt(item.time.split(':')[0])
-        const label = hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`
+      return todayData.map((item) => {
+        const hour = parseInt(item.time.split(":")[0]);
+        const label =
+          hour === 0
+            ? "12 AM"
+            : hour < 12
+              ? `${hour} AM`
+              : hour === 12
+                ? "12 PM"
+                : `${hour - 12} PM`;
         return {
           month: label,
           revenue: item.revenue,
           sales: item.sales,
-        }
-      })
+        };
+      });
     }
-  }, [timePeriod, todayData, weekData, historicalMonthlyData])
+  }, [timePeriod, todayData, weekData, historicalMonthlyData]);
 
   // Calculate max value for better Y-axis scaling
   const maxValue = useMemo(() => {
-    if (chartData.length === 0) return 1000
-    const maxRevenue = Math.max(...chartData.map(d => d.revenue), 0)
-    const maxSales = Math.max(...chartData.map(d => d.sales), 0)
-    return Math.max(maxRevenue, maxSales * 100) // Scale sales if needed
-  }, [chartData])
+    if (chartData.length === 0) return 1000;
+    const maxRevenue = Math.max(...chartData.map((d) => d.revenue), 0);
+    const maxSales = Math.max(...chartData.map((d) => d.sales), 0);
+    return Math.max(maxRevenue, maxSales * 100); // Scale sales if needed
+  }, [chartData]);
 
   return (
     <Card className="bg-card text-card-foreground border-none">
@@ -87,23 +98,29 @@ export function OverviewChart({
         <h2 className="text-xl font-semibold">Overview</h2>
 
         <div className="flex items-center gap-2">
-          <Button 
+          <Button
             variant={timePeriod === "Monthly" ? "secondary" : "ghost"}
-            className={timePeriod === "Monthly" ? "bg-chart-accent text-black" : ""}
+            className={
+              timePeriod === "Monthly" ? "bg-chart-accent text-black" : ""
+            }
             onClick={() => setTimePeriod("Monthly")}
           >
             Monthly
           </Button>
-          <Button 
+          <Button
             variant={timePeriod === "Daily" ? "secondary" : "ghost"}
-            className={timePeriod === "Daily" ? "bg-chart-accent text-black" : ""}
+            className={
+              timePeriod === "Daily" ? "bg-chart-accent text-black" : ""
+            }
             onClick={() => setTimePeriod("Daily")}
           >
             Daily
           </Button>
-          <Button 
+          <Button
             variant={timePeriod === "Weekly" ? "secondary" : "ghost"}
-            className={timePeriod === "Weekly" ? "bg-chart-accent text-black" : ""}
+            className={
+              timePeriod === "Weekly" ? "bg-chart-accent text-black" : ""
+            }
             onClick={() => setTimePeriod("Weekly")}
           >
             Weekly
@@ -121,8 +138,16 @@ export function OverviewChart({
             <LineChart data={chartData}>
               <defs>
                 <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={`hsl(var(--chart-accent))`} stopOpacity={0.4} />
-                  <stop offset="100%" stopColor={`hsl(var(--chart-accent))`} stopOpacity={0} />
+                  <stop
+                    offset="0%"
+                    stopColor={`hsl(var(--chart-accent))`}
+                    stopOpacity={0.4}
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor={`hsl(var(--chart-accent))`}
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
 
@@ -146,15 +171,18 @@ export function OverviewChart({
                 axisLine={false}
                 tickFormatter={(v) => {
                   if (timePeriod === "Daily" && v < 1000) {
-                    return `${v}`
+                    return `${v}`;
                   }
-                  return `${(v / 1000).toFixed(1)}k`
+                  return `${(v / 1000).toFixed(1)}k`;
                 }}
                 domain={[0, maxValue * 1.1]}
               />
 
               <Tooltip
-                cursor={{ stroke: `hsl(var(--sidebar-accent))`, strokeWidth: 1 }}
+                cursor={{
+                  stroke: `hsl(var(--sidebar-accent))`,
+                  strokeWidth: 1,
+                }}
                 contentStyle={{
                   backgroundColor: `hsl(var(--card))`,
                   color: `hsl(var(--card-foreground))`,
@@ -163,9 +191,9 @@ export function OverviewChart({
                 }}
                 formatter={(value: number, name: string) => {
                   if (name === "sales") {
-                    return [`${value} orders`, "Sales"]
+                    return [`${value} orders`, "Sales"];
                   }
-                  return [`$${value.toFixed(2)}`, "Revenue"]
+                  return [`$${value.toFixed(2)}`, "Revenue"];
                 }}
               />
 
@@ -192,5 +220,5 @@ export function OverviewChart({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,17 +1,21 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useSidebar } from "@/components/ui/sidebar"
+import React from "react";
+import { useSidebar } from "@/components/ui/sidebar";
 
-export default function LayoutMain({ children }: { children: React.ReactNode }) {
-  const { isMobile, state } = useSidebar()
+export default function LayoutMain({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { isMobile, state } = useSidebar();
 
   // Determine sidebar offset based on state
   const sidebarOffset = isMobile
     ? "0px"
     : state === "collapsed"
-    ? "var(--sidebar-width-icon)"
-    : "var(--sidebar-width)"
+      ? "var(--sidebar-width-icon)"
+      : "var(--sidebar-width)";
 
   return (
     <main
@@ -23,5 +27,5 @@ export default function LayoutMain({ children }: { children: React.ReactNode }) 
     >
       {children}
     </main>
-  )
+  );
 }

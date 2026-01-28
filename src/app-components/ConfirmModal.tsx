@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 
 interface ConfirmModalProps {
-  open: boolean
-  title?: string
-  description?: string
-  confirmText?: string
-  cancelText?: string
-  loading?: boolean
-  onConfirm: () => void
-  onCancel: () => void
+  open: boolean;
+  title?: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  loading?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 export default function ConfirmModal({
@@ -23,15 +23,12 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <>
       {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/60 z-40"
-        onClick={onCancel}
-      />
+      <div className="fixed inset-0 bg-black/60 z-40" onClick={onCancel} />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -64,5 +61,5 @@ export default function ConfirmModal({
         </div>
       </div>
     </>
-  )
+  );
 }

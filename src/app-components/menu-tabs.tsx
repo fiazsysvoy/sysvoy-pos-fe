@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function MenuTabs() {
   return (
@@ -10,5 +10,5 @@ export default function MenuTabs() {
         <TabsTrigger value="desserts">Desserts and Drinks</TabsTrigger>
       </TabsList>
     </Tabs>
-  )
+  );
 }

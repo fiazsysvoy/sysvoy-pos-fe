@@ -1,6 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,146 +22,154 @@ import { useAuthFlow } from "@/context/auth-flow-context";
 import OtpInput from "./OtpInput";
 
 interface VerifyEmailForm {
-    code: string;
+  code: string;
 }
 
 const VerifyEmailContent = () => {
-    const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-    const { email, setTempToken } = useAuthFlow();
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const { email, setTempToken } = useAuthFlow();
 
-    const {
-        handleSubmit,
-        control,
-        formState: { errors, isSubmitting },
-    } = useForm<VerifyEmailForm>({
-        mode: "onChange",
-    });
+  const {
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<VerifyEmailForm>({
+    mode: "onChange",
+  });
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const accessToken = localStorage.getItem("accessToken");
-            if (accessToken) {
-                router.replace("/dashboard");
-            } else if (!email) {
-                router.replace("/login");
-            } else {
-                setIsLoading(false);
-            }
-        }
-    }, [router, email]);
-
-    if (isLoading) {
-        return <Loader />;
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const accessToken = localStorage.getItem("accessToken");
+      if (accessToken) {
+        router.replace("/dashboard");
+      } else if (!email) {
+        router.replace("/login");
+      } else {
+        setIsLoading(false);
+      }
     }
+  }, [router, email]);
 
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (!email) {
     if (!email) {
-        if (!email) {
-            return null;
-        }
+      return null;
     }
+  }
 
-    const onSubmit = async (data: VerifyEmailForm) => {
-        try {
-            const res = await api.post("/api/auth/verify-email", {
-                email: email,
-                code: data.code,
-            });
+  const onSubmit = async (data: VerifyEmailForm) => {
+    try {
+      const res = await api.post("/api/auth/verify-email", {
+        email: email,
+        code: data.code,
+      });
 
-            if (res.data?.accessToken) {
-                setTempToken(res.data.accessToken);
-            }
+      if (res.data?.accessToken) {
+        setTempToken(res.data.accessToken);
+      }
 
-            toast.success("Email verified successfully!");
-            router.push("/setup-business");
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Verification failed");
-            console.error(err);
-        }
-    };
+      toast.success("Email verified successfully!");
+      router.push("/setup-business");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Verification failed");
+      console.error(err);
+    }
+  };
 
-    const handleResend = async () => {
-        try {
-            await api.post("/api/auth/resend-verification", {
-                email: email,
-            });
-            toast.success("Verification code resent!");
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to resend code");
-            console.error(err);
-        }
-    };
+  const handleResend = async () => {
+    try {
+      await api.post("/api/auth/resend-verification", {
+        email: email,
+      });
+      toast.success("Verification code resent!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to resend code");
+      console.error(err);
+    }
+  };
 
-    return (
-        <div className="flex items-center justify-center w-full">
-            <Card className="w-1/4">
-                <CardHeader>
-                    <CardTitle>Verify your email</CardTitle>
-                    <CardDescription>
-                        We have sent a verification code to <span className="font-semibold">{email}</span>
-                    </CardDescription>
-                </CardHeader>
+  return (
+    <div className="flex items-center justify-center w-full">
+      <Card className="w-1/4">
+        <CardHeader>
+          <CardTitle>Verify your email</CardTitle>
+          <CardDescription>
+            We have sent a verification code to{" "}
+            <span className="font-semibold">{email}</span>
+          </CardDescription>
+        </CardHeader>
 
-                <CardContent>
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-col gap-1">
-                                <Label className="text-sm font-medium mb-2" htmlFor="code">Verification Code</Label>
-                                <Controller
-                                    name="code"
-                                    control={control}
-                                    rules={{
-                                        required: "Verification code is required",
-                                        minLength: { value: 6, message: "Code must be 6 digits" },
-                                    }}
-                                    render={({ field }) => (
-                                        <OtpInput
-                                            value={field.value || ""}
-                                            onChange={field.onChange}
-                                        />
-                                    )}
-                                />
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-1">
+                <Label className="text-sm font-medium mb-2" htmlFor="code">
+                  Verification Code
+                </Label>
+                <Controller
+                  name="code"
+                  control={control}
+                  rules={{
+                    required: "Verification code is required",
+                    minLength: { value: 6, message: "Code must be 6 digits" },
+                  }}
+                  render={({ field }) => (
+                    <OtpInput
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
 
-                                {errors.code && (
-                                    <span className="text-red-500 text-sm text-center">
-                                        {errors.code.message}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                {errors.code && (
+                  <span className="text-red-500 text-sm text-center">
+                    {errors.code.message}
+                  </span>
+                )}
+              </div>
+            </div>
 
-                        <CardFooter className="flex-col gap-2 mt-2">
-                            <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
-                                {isSubmitting ? "Verifying..." : "Verify Email"}
-                            </Button>
+            <CardFooter className="flex-col gap-2 mt-2">
+              <Button
+                type="submit"
+                className="w-full"
+                variant="black"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Verifying..." : "Verify Email"}
+              </Button>
 
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="px-0 font-normal"
-                                onClick={handleResend}
-                            >
-                                Resend verification code
-                            </Button>
+              <Button
+                type="button"
+                variant="link"
+                className="px-0 font-normal"
+                onClick={handleResend}
+              >
+                Resend verification code
+              </Button>
 
-                            <div className="text-sm text-center text-muted-foreground mt-2">
-                                Back to{" "}
-                                <Link href="/login" className="text-primary hover:underline">
-                                    Login
-                                </Link>
-                            </div>
-                        </CardFooter>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
-    );
+              <div className="text-sm text-center text-muted-foreground mt-2">
+                Back to{" "}
+                <Link href="/login" className="text-primary hover:underline">
+                  Login
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
 export const VerifyEmailCard = () => {
-    return (
-        <Suspense fallback={<Loader />}>
-            <VerifyEmailContent />
-        </Suspense>
-    )
-}
+  return (
+    <Suspense fallback={<Loader />}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+};

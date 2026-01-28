@@ -1,9 +1,13 @@
-import axios, { AxiosRequestConfig, InternalAxiosRequestConfig, AxiosError } from "axios";
+import axios, {
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+  AxiosError,
+} from "axios";
 
 /**
  * Central axios instance with interceptor that injects Authorization header
  * from localStorage for every request except signin/signup endpoints.
- * 
+ *
  * Implements automatic token refresh on 401 errors using refresh token.
  *
  * Usage:
@@ -47,14 +51,16 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // Response interceptor: handle 401 errors with automatic token refresh
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // If error is 401 and we haven't retried this request yet
     if (error?.response?.status === 401 && !originalRequest._retry) {
@@ -63,7 +69,8 @@ api.interceptors.response.use(
         return new Promise((resolve) => {
           failedRequestsQueue.push((token: string) => {
             if (originalRequest.headers) {
-              (originalRequest.headers as any).Authorization = `Bearer ${token}`;
+              (originalRequest.headers as any).Authorization =
+                `Bearer ${token}`;
             }
             resolve(api(originalRequest));
           });
@@ -85,7 +92,7 @@ api.interceptors.response.use(
           // Call refresh token endpoint
           const response = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/refresh-token`,
-            { refreshToken }
+            { refreshToken },
           );
 
           const newAccessToken = response.data.accessToken;
@@ -95,7 +102,8 @@ api.interceptors.response.use(
 
           // Update authorization header for the original request
           if (originalRequest.headers) {
-            (originalRequest.headers as any).Authorization = `Bearer ${newAccessToken}`;
+            (originalRequest.headers as any).Authorization =
+              `Bearer ${newAccessToken}`;
           }
 
           // Process all queued requests with the new token
@@ -119,7 +127,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

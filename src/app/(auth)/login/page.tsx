@@ -1,14 +1,14 @@
-import { LoginCard } from "@/app-components/loginCard"
+import { LoginCard } from "@/app-components/loginCard";
 
 const LoginPage = () => {
-    return (
-        <div className="h-full flex items-center justify-center flex-col">
-            <h1 className="text-center text-4xl font-extrabold tracking-tight text-balance text-white m-24 mt-0">
-                Point of Sale
-            </h1>
-            <LoginCard />
-        </div>
-    )
-}
+  return (
+    <div className="h-full flex items-center justify-center flex-col">
+      <h1 className="text-center text-4xl font-extrabold tracking-tight text-balance text-white m-24 mt-0">
+        Point of Sale
+      </h1>
+      <LoginCard />
+    </div>
+  );
+};
 
-export default LoginPage
+export default LoginPage;

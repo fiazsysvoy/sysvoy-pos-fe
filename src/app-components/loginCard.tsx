@@ -1,6 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,13 +68,14 @@ export const LoginCard = () => {
           setEmail(data.email);
 
           // resending verification otp email
-          await api.post("/api/auth/resend-verification", { email: data.email });
+          await api.post("/api/auth/resend-verification", {
+            email: data.email,
+          });
           router.replace("/verify-email");
-
         } else if (userStatus === "ORG_UNATTACHED") {
           toast.success("Login successful!");
           setTempToken(res.data.accessToken);
-          // localStorage.setItem("token", res.data.token); 
+          // localStorage.setItem("token", res.data.token);
           router.replace("/setup-business");
         } else if (userStatus === "ACTIVE") {
           localStorage.setItem("accessToken", res.data.accessToken);
@@ -111,7 +119,9 @@ export const LoginCard = () => {
                   })}
                 />
                 {errors.email && (
-                  <span className="text-red-500 text-sm">{errors.email.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.email.message}
+                  </span>
                 )}
               </div>
 
@@ -123,24 +133,32 @@ export const LoginCard = () => {
                   type="password"
                   {...register("password", {
                     required: "Password is required",
-                    minLength: { value: 6, message: "Password must be at least 6 characters" },
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
                   })}
                 />
                 {errors.password && (
-                  <span className="text-red-500 text-sm">{errors.password.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.password.message}
+                  </span>
                 )}
               </div>
             </div>
 
             <CardFooter className="flex-col gap-2 mt-4">
-              <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full"
+                variant="black"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Logging in..." : "Login"}
               </Button>
               {/* forgot pass */}
               <Button asChild variant="link" className="px-0 font-normal">
-                <Link href="/forgot-password">
-                  Forgot Password?
-                </Link>
+                <Link href="/forgot-password">Forgot Password?</Link>
               </Button>
 
               {/* signup link */}

@@ -1,20 +1,24 @@
-"use client"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+"use client";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 const chartConfig = {
   revenue: {
     label: "Revenue",
     color: "hsl(var(--chart-accent))",
   },
-} as const
+} as const;
 
 interface ChartDataPoint {
-  month?: string
-  date?: string
-  time?: string
-  revenue: number
-  desktop?: number
+  month?: string;
+  date?: string;
+  time?: string;
+  revenue: number;
+  desktop?: number;
 }
 
 const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
@@ -22,7 +26,7 @@ const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
   const chartData = data.map((item) => ({
     label: item.month || item.date || item.time || "",
     revenue: item.revenue || item.desktop || 0,
-  }))
+  }));
 
   // If no data, show empty chart with placeholder
   if (!chartData || chartData.length === 0) {
@@ -30,12 +34,12 @@ const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
       <div className="flex items-center justify-center h-32 w-full text-muted-foreground text-xs">
         No data available
       </div>
-    )
+    );
   }
 
   // Calculate max value for better scaling
-  const maxValue = Math.max(...chartData.map((d) => d.revenue), 1)
-  const yAxisDomain = [0, maxValue * 1.1] // Add 10% padding at top
+  const maxValue = Math.max(...chartData.map((d) => d.revenue), 1);
+  const yAxisDomain = [0, maxValue * 1.1]; // Add 10% padding at top
 
   return (
     <div className="w-full h-32">
@@ -68,20 +72,17 @@ const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
             dataKey="label"
             tickLine={false}
             axisLine={false}
-            tick={{ 
-              fill: "hsl(var(--card-foreground) / 0.6)", 
+            tick={{
+              fill: "hsl(var(--card-foreground) / 0.6)",
               fontSize: 9,
-              fontWeight: 500
+              fontWeight: 500,
             }}
             interval={chartData.length > 7 ? 1 : 0}
             angle={chartData.length > 5 ? -35 : 0}
             textAnchor={chartData.length > 5 ? "end" : "middle"}
             height={chartData.length > 5 ? 45 : 25}
           />
-          <YAxis
-            hide={true}
-            domain={yAxisDomain}
-          />
+          <YAxis hide={true} domain={yAxisDomain} />
           <ChartTooltip
             content={({ active, payload }) => {
               if (active && payload && payload.length) {
@@ -97,9 +98,9 @@ const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
                       </span>
                     </div>
                   </div>
-                )
+                );
               }
-              return null
+              return null;
             }}
             cursor={{ fill: "hsl(var(--chart-accent) / 0.1)" }}
           />
@@ -114,7 +115,7 @@ const CustomChart = ({ data }: { data: ChartDataPoint[] }) => {
         </BarChart>
       </ChartContainer>
     </div>
-  )
-}
+  );
+};
 
-export default CustomChart
+export default CustomChart;

@@ -5,7 +5,11 @@ import ToastProvider from "@/app-components/ToastProvider";
 
 import { AuthFlowProvider } from "@/context/auth-flow-context"; // Import Provider
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
@@ -13,9 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider />
           <AuthFlowProvider>
             <div className="flex min-h-screen">
-              <main className="flex-1 bg-white">
-                {children}
-              </main>
+              <main className="flex-1 bg-white">{children}</main>
             </div>
           </AuthFlowProvider>
         </ThemeProvider>

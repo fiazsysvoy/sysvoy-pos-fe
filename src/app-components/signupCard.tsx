@@ -1,6 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,11 +99,16 @@ export const SignupCard = () => {
                   placeholder="John Doe"
                   {...register("name", {
                     required: "Name is required",
-                    minLength: { value: 2, message: "Name must be at least 2 characters" },
+                    minLength: {
+                      value: 2,
+                      message: "Name must be at least 2 characters",
+                    },
                   })}
                 />
                 {errors.name && (
-                  <span className="text-red-500 text-sm">{errors.name.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.name.message}
+                  </span>
                 )}
               </div>
 
@@ -116,7 +128,9 @@ export const SignupCard = () => {
                   })}
                 />
                 {errors.email && (
-                  <span className="text-red-500 text-sm">{errors.email.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.email.message}
+                  </span>
                 )}
               </div>
 
@@ -129,11 +143,16 @@ export const SignupCard = () => {
                   placeholder="••••••••"
                   {...register("password", {
                     required: "Password is required",
-                    minLength: { value: 6, message: "Password must be at least 6 characters" },
+                    minLength: {
+                      value: 6,
+                      message: "Password must be at least 6 characters",
+                    },
                   })}
                 />
                 {errors.password && (
-                  <span className="text-red-500 text-sm">{errors.password.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.password.message}
+                  </span>
                 )}
               </div>
 
@@ -151,13 +170,20 @@ export const SignupCard = () => {
                   })}
                 />
                 {errors.confirmPassword && (
-                  <span className="text-red-500 text-sm">{errors.confirmPassword.message}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.confirmPassword.message}
+                  </span>
                 )}
               </div>
             </div>
 
             <CardFooter className="flex-col gap-2 mt-4">
-              <Button type="submit" className="w-full" variant="black" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full"
+                variant="black"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Creating account..." : "Create account"}
               </Button>
               <div className="text-sm text-center text-muted-foreground mt-2">
@@ -173,4 +199,3 @@ export const SignupCard = () => {
     </div>
   );
 };
-

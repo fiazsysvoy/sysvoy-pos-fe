@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-
   :root {
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
@@ -64,8 +63,6 @@
     scrollbar-width: none; /* Firefox */
   }
 }
-
-
 
 @layer base {
   * {
