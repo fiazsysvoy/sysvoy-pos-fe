@@ -225,7 +225,7 @@ export default function FinancialPage() {
           ) : stats ? (
             <>
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -243,22 +243,38 @@ export default function FinancialPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        Total Orders
+                        Total Costs
                       </p>
-                      <p className="text-2xl font-bold">{totalOrders}</p>
+                      <p className="text-2xl font-bold">
+                        ${(stats?.summary.totalCosts ?? 0).toFixed(2)}
+                      </p>
                     </div>
-                    <TrendingUp className="w-8 h-8 text-pink-500" />
+                    <DollarSign className="w-8 h-8 text-pink-500" />
                   </div>
                 </Card>
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">
-                        Total Costs
+                        Net Revenue
                       </p>
                       <p className="text-2xl font-bold">
-                        ${(stats?.summary.totalCosts ?? 0).toFixed(2)}
+                        $
+                        {(
+                          (totalRevenue ?? 0) - (stats?.summary.totalCosts ?? 0)
+                        ).toFixed(2)}
                       </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-pink-500" />
+                  </div>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Total Orders
+                      </p>
+                      <p className="text-2xl font-bold">{totalOrders}</p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-pink-500" />
                   </div>
