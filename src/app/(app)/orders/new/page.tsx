@@ -55,7 +55,7 @@ export default function NewOrderPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | "all">("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   // const [customerName, setCustomerName] = useState("Watson Joyce")
   const [orderName, setOrderName] = useState("Order");
@@ -142,9 +142,10 @@ export default function NewOrderPage() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, fetchProducts]);
 
-  const filteredProducts = selectedCategory
-    ? products.filter((p) => p.categoryId === selectedCategory)
-    : products;
+  const filteredProducts =
+    selectedCategory === "all"
+      ? products
+      : products.filter((p) => p.categoryId === selectedCategory);
 
   const updateQuantity = (productId: string, change: number) => {
     const product = products.find((p) => p.id === productId);
@@ -265,49 +266,42 @@ export default function NewOrderPage() {
           </div>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-4 gap-6 mb-6">
-          {loading ? (
-            <p className="text-muted-foreground">Loading categories...</p>
-          ) : (
-            categories.map((category) => (
-              <Card
-                key={category.id}
-                className={`bg-card border-0 cursor-pointer hover:bg-accent transition-colors h-[170px] flex flex-col ${
-                  selectedCategory === category.id
-                    ? "ring-2 ring-[#FAC1D9]"
-                    : ""
-                }`}
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                <div className="p-4 flex flex-col items-center justify-center h-full">
-                  <div className="mb-3 p-3 rounded-full bg-[#FAC1D9]/20 flex-shrink-0">
-                    {category.imageUrl ? (
-                      <img
-                        src={category.imageUrl}
-                        alt={category.name}
-                        className="h-10 w-10 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 bg-[#FAC1D9] rounded" />
-                    )}
-                  </div>
-                  <div className="flex-1 flex flex-col justify-end w-full">
-                    <h3 className="text-sm font-semibold mb-0.5 text-card-foreground text-left w-full">
-                      {category.name}
-                    </h3>
-                    <p className="text-xs text-muted-foreground text-left w-full">
-                      {
-                        products.filter((p) => p.categoryId === category.id)
-                          .length
-                      }{" "}
-                      items
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ))
-          )}
+        {/* Category Dropdown */}
+        <div className="mb-6">
+          <Label htmlFor="category-select" className="text-sm text-muted-foreground mb-2 block">
+            Category
+          </Label>
+          <Select
+            value={selectedCategory}
+            onValueChange={(value: string) => setSelectedCategory(value as string | "all")}
+          >
+            <SelectTrigger
+              id="category-select"
+              className="w-64 bg-card border-border text-card-foreground"
+            >
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border z-[9999] shadow-xl">
+              <SelectItem value="all" className="bg-card hover:bg-accent">
+                All Categories
+              </SelectItem>
+              {loading ? (
+                <SelectItem value="loading" disabled>
+                  Loading categories...
+                </SelectItem>
+              ) : (
+                categories.map((category) => (
+                  <SelectItem
+                    key={category.id}
+                    value={category.id}
+                    className="bg-card hover:bg-accent"
+                  >
+                    {category.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* PRODUCTS GRID (COMPACT) */}

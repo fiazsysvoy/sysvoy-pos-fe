@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import CategoryCards from "@/app-components/category-cards";
 import MenuTable from "@/app-components/menu-table";
 import SingleProductSidebar from "@/app-components/single-product-sidebar";
@@ -48,17 +48,38 @@ export default function MenuPage() {
   const [categorySearch, setCategorySearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
 
+  // Pagination states
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageSize = 10; // Fixed at 10 rows per page
+  const [total, setTotal] = useState(0);
+  const [pageCount, setPageCount] = useState(0);
+  const isInitialMount = useRef(true);
+
   // Fetch products
-  const fetchProducts = async (searchQuery?: string) => {
+  const fetchProducts = async (searchQuery?: string, newPageIndex?: number, newPageSize?: number) => {
     try {
       setLoadingProducts(true);
       const params = new URLSearchParams();
       if (searchQuery) {
         params.append("search", searchQuery);
       }
+      const currentPageIndex = newPageIndex !== undefined ? newPageIndex : pageIndex;
+      const currentPageSize = newPageSize !== undefined ? newPageSize : pageSize;
+      
+      params.append("pageIndex", currentPageIndex.toString());
+      params.append("pageSize", currentPageSize.toString());
+      
       const res = await api.get(`/api/products?${params.toString()}`);
-      console.log(res.data.data);
-      setProducts(res.data.data);
+      console.log(res.data);
+      
+      setProducts(res.data.data || []);
+      
+      // Update pagination metadata
+      if (res.data.meta) {
+        setTotal(res.data.meta.total || 0);
+        setPageCount(res.data.meta.pageCount || 0);
+        setPageIndex(res.data.meta.pageIndex || 0);
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to fetch products");
       console.error(err);
@@ -119,17 +140,35 @@ export default function MenuPage() {
     return () => clearTimeout(timeoutId);
   }, [categorySearch]);
 
+  // Initial fetch on mount
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchCategories();
+      fetchProducts();
+      return;
+    }
+  }, []);
+
   // Effect for product search with debounce
   useEffect(() => {
+    // Skip debounce on initial mount
+    if (isInitialMount.current) {
+      return;
+    }
+    
+    // Reset to first page when search changes
     const timeoutId = setTimeout(
       () => {
-        fetchProducts(productSearch || undefined);
+        setPageIndex(0);
+        fetchProducts(productSearch || undefined, 0, pageSize);
       },
       productSearch ? 500 : 0,
     ); // No debounce when clearing search, 500ms when typing
 
     return () => clearTimeout(timeoutId);
   }, [productSearch]);
+
 
   return (
     <>
@@ -198,9 +237,58 @@ export default function MenuPage() {
           loading={loadingProducts}
           onSuccess={async () => {
             await fetchCategories(categorySearch || undefined);
-            await fetchProducts(productSearch || undefined);
+            await fetchProducts(productSearch || undefined, pageIndex, pageSize);
           }}
         />
+
+        {/* Pagination Controls */}
+        {total > 0 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-2 text-sm text-black dark:text-zinc-400">
+              <span>Showing</span>
+              <span className="font-medium">
+                {pageIndex * pageSize + 1} - {Math.min((pageIndex + 1) * pageSize, total)}
+              </span>
+              <span>of</span>
+              <span className="font-medium">{total}</span>
+              <span>products</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <span className="text-sm text-black dark:text-zinc-400">
+                  Page {pageIndex + 1} of {pageCount || 1}
+                </span>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newPageIndex = Math.max(0, pageIndex - 1);
+                      setPageIndex(newPageIndex);
+                      fetchProducts(productSearch || undefined, newPageIndex, pageSize);
+                    }}
+                    disabled={pageIndex === 0 || loadingProducts}
+                    className="bg-card border-border text-card-foreground hover:bg-accent"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newPageIndex = Math.min(pageCount - 1, pageIndex + 1);
+                      setPageIndex(newPageIndex);
+                      fetchProducts(productSearch || undefined, newPageIndex, pageSize);
+                    }}
+                    disabled={pageIndex >= pageCount - 1 || loadingProducts}
+                    className="bg-card border-border text-card-foreground hover:bg-accent"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+          </div>
+        )}
       </div>
 
       {/* Category Sidebar */}
@@ -213,7 +301,7 @@ export default function MenuPage() {
           category={selectedCategory}
           onSuccess={() => {
             fetchCategories(categorySearch || undefined);
-            fetchProducts(productSearch || undefined);
+            fetchProducts(productSearch || undefined, pageIndex, pageSize);
           }}
         />
       )}
@@ -225,7 +313,7 @@ export default function MenuPage() {
           onClose={() => setOpenProductMenu(false)}
           onSuccess={async () => {
             await fetchCategories(categorySearch || undefined);
-            await fetchProducts(productSearch || undefined);
+            await fetchProducts(productSearch || undefined, pageIndex, pageSize);
           }}
         />
       )}
