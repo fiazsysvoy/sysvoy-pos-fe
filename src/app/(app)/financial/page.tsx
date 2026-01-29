@@ -20,7 +20,8 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { Calendar, TrendingUp, DollarSign, Info } from "lucide-react";
+import Link from "next/link";
+import { Calendar, TrendingUp, DollarSign, Info, ChevronRight } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -509,9 +510,19 @@ export default function FinancialPage() {
 
               {/* Top Products Table */}
               <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Showing top products for {fromDate} – {toDate}
-                </h3>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Showing top products for {fromDate} – {toDate}
+                  </h3>
+                  <Button variant="outline" size="sm" className="gap-1" asChild>
+                    <Link
+                      href={`/financial/products?fromDate=${fromDate}&toDate=${toDate}`}
+                    >
+                      View All
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full table-fixed">
                     <thead>
