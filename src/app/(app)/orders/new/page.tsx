@@ -63,6 +63,7 @@ export default function NewOrderPage() {
     "CASH" | "JAZZCASH" | "EASYPAISA"
   >("CASH");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [discount, setDiscount] = useState<number>(0);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -192,7 +193,7 @@ export default function NewOrderPage() {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const total = subtotal;
+  const total = Math.max(0, subtotal - (discount || 0));
 
   const handleConfirmOrder = async () => {
     if (cart.length === 0) {
@@ -219,6 +220,7 @@ export default function NewOrderPage() {
           quantity: item.quantity,
         })),
         paymentMethod,
+        discount: discount || 0,
         // Store customer phone for later payment processing
         ...(paymentMethod !== "CASH" &&
           customerPhone.trim() && {
@@ -442,7 +444,40 @@ export default function NewOrderPage() {
 
         {/* Bill Summary */}
         <div className="p-6 border-t border-border space-y-3">
-          <div className="flex justify-between text-xl">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-card-foreground">
+              ${subtotal.toFixed(2)}
+            </span>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="discount"
+              className="text-sm text-muted-foreground"
+            >
+              Discount
+            </Label>
+            <Input
+              id="discount"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={discount || ""}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                setDiscount(Math.max(0, value));
+              }}
+              className="bg-background border-border text-card-foreground"
+            />
+          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-sm text-red-500">
+              <span>Discount Applied</span>
+              <span>-${discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-xl pt-2 border-t border-border">
             <span className="font-bold text-card-foreground">Total</span>
             <span className="font-bold text-card-foreground">
               ${total.toFixed(2)}

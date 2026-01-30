@@ -58,6 +58,7 @@ export default function EditOrderPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   // const [customerName, setCustomerName] = useState("Watson Joyce")
   const [orderName, setOrderName] = useState("Order");
+  const [discount, setDiscount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -131,6 +132,7 @@ export default function EditOrderPage() {
         }));
         setOrderName(order.name);
         setCart(orderItems);
+        setDiscount(order.discount || 0);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to fetch order");
@@ -216,7 +218,7 @@ export default function EditOrderPage() {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const total = subtotal;
+  const total = Math.max(0, subtotal - (discount || 0));
 
   const handleUpdateOrder = async () => {
     if (cart.length === 0) {
@@ -231,6 +233,7 @@ export default function EditOrderPage() {
           productId: item.productId,
           quantity: item.quantity,
         })),
+        discount: discount || 0,
       };
       await api.put(`/api/orders/${orderId}`, orderData);
 
@@ -447,7 +450,40 @@ export default function EditOrderPage() {
 
         {/* Bill Summary */}
         <div className="p-6 border-t border-border space-y-3">
-          <div className="flex justify-between text-xl">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-card-foreground">
+              ${subtotal.toFixed(2)}
+            </span>
+          </div>
+          <div className="space-y-2">
+            <Label
+              htmlFor="discount"
+              className="text-sm text-muted-foreground"
+            >
+              Discount
+            </Label>
+            <Input
+              id="discount"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={discount || ""}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                setDiscount(Math.max(0, value));
+              }}
+              className="bg-background border-border text-card-foreground"
+            />
+          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-sm text-red-500">
+              <span>Discount Applied</span>
+              <span>-${discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-xl pt-2 border-t border-border">
             <span className="font-bold text-card-foreground">Total</span>
             <span className="font-bold text-card-foreground">
               ${total.toFixed(2)}
