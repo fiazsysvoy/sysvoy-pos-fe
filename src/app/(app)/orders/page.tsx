@@ -6,6 +6,8 @@ import {
   Search,
   Pencil,
   Trash2,
+  Printer,
+  Download,
   CheckCircle2,
   Clock,
   CreditCard,
@@ -66,6 +68,7 @@ export default function OrdersPage() {
   const [selectedFilter, setSelectedFilter] =
     useState<OrderFilterStatus>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [printingId, setPrintingId] = useState<string | null>(null);
   const isInitialMount = useRef(true);
 
   const fetchOrders = useCallback(async (searchQuery?: string) => {
@@ -206,6 +209,50 @@ export default function OrdersPage() {
 
     return true;
   });
+
+  const handlePrintOrder = async (orderId: string, download: boolean = false) => {
+    try {
+      setPrintingId(orderId);
+      const res = await api.get(`/api/orders/${orderId}/print${download ? "?download=true" : ""}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      if (download) {
+        // Trigger download
+        const link = document.createElement("a");
+        link.href = url;
+        // Extract filename from Content-Disposition header if available
+        const contentDisposition = res.headers["content-disposition"];
+        let filename = `order-${orderId.slice(-8)}.pdf`;
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match) filename = match[1];
+        }
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Order receipt downloaded");
+      } else {
+        // Open in new tab
+        window.open(url, "_blank");
+        toast.success("Order receipt opened in new tab");
+      }
+
+      // Cleanup after a delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err: any) {
+      toast.error(
+        err.response?.data?.message || "Failed to generate order PDF",
+      );
+      console.error(err);
+    } finally {
+      setPrintingId(null);
+    }
+  };
 
   const handleCancelOrder = async (orderId: string) => {
     if (typeof window === "undefined") return;
@@ -585,42 +632,72 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Action Buttons (only for IN_PROCESS orders) */}
-                  {order.status === "IN_PROCESS" && (
-                    <div className="flex items-center gap-2 mt-auto flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
-                        onClick={() => router.push(`/orders/edit/${order.id}`)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0 "
-                        onClick={() => handleCancelOrder(order.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        className={`flex-1 h-10 ${
-                          order.paymentStatus === "COMPLETED"
-                            ? "bg-green-600 hover:bg-green-700 text-white"
-                            : "bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black"
-                        }`}
-                        onClick={() => handleCompleteOrder(order)}
-                        disabled={order.paymentStatus === "PROCESSING"}
-                      >
-                        {order.paymentStatus === "COMPLETED"
-                          ? "Complete Order"
-                          : order.paymentStatus === "PROCESSING"
-                            ? "Processing..."
-                            : "Pay Bill"}
-                      </Button>
-                    </div>
-                  )}
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 mt-auto flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
+                      onClick={() => handlePrintOrder(order.id, false)}
+                      disabled={printingId === order.id}
+                      title="View PDF"
+                    >
+                      {printingId === order.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Printer className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
+                      onClick={() => handlePrintOrder(order.id, true)}
+                      disabled={printingId === order.id}
+                      title="Download PDF"
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    {order.status === "IN_PROCESS" && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
+                          onClick={() =>
+                            router.push(`/orders/edit/${order.id}`)
+                          }
+                          title="Edit order"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 bg-accent border border-[#FAC1D9] p-5 text-[#FAC1D9] hover:bg-accent/80 flex-shrink-0"
+                          onClick={() => handleCancelOrder(order.id)}
+                          title="Cancel order"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          className={`flex-1 h-10 ${
+                            order.paymentStatus === "COMPLETED"
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : "bg-[#FAC1D9] hover:bg-[#FAC1D9]/80 text-black"
+                          }`}
+                          onClick={() => handleCompleteOrder(order)}
+                          disabled={order.paymentStatus === "PROCESSING"}
+                        >
+                          {order.paymentStatus === "COMPLETED"
+                            ? "Complete Order"
+                            : order.paymentStatus === "PROCESSING"
+                              ? "Processing..."
+                              : "Pay Bill"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </Card>
               );
             })}
