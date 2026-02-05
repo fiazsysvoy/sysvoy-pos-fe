@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -56,6 +56,23 @@ export default function MenuTable({
   const [deleting, setDeleting] = useState(false);
   const [openProductMenu, setOpenProductMenu] = useState(false);
   const [editProduct, setEditProduct] = useState<null | Product>(null);
+  const [lowStockThreshold, setLowStockThreshold] = useState(10);
+
+  useEffect(() => {
+    const fetchThreshold = async () => {
+      try {
+        const res = await api.get("/api/account/organization");
+        if (res.data.success && res.data.data) {
+          setLowStockThreshold(res.data.data.lowStockThreshold || 10);
+        }
+      } catch (err) {
+        console.error("Failed to fetch threshold:", err);
+      }
+    };
+    fetchThreshold();
+  }, []);
+
+  const isLowStock = (stock: number) => stock <= lowStockThreshold;
 
   const handleEdit = (product: Product) => {
     setEditProduct(product);
@@ -107,14 +124,18 @@ export default function MenuTable({
         products.map((product) => (
           <div
             key={product.id}
-            className="
+            className={`
               grid grid-cols-7 items-center px-4 py-4
               text-black dark:text-white
               border-t border-zinc-200
-              bg-zinc-200 dark:bg-black 
               dark:border-white/5
               dark:hover:bg-zinc-800
-            "
+              ${
+                isLowStock(product.stock)
+                  ? "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800"
+                  : "bg-zinc-200 dark:bg-black"
+              }
+            `}
           >
             {/* <Checkbox /> */}
             <img
@@ -131,7 +152,12 @@ export default function MenuTable({
             </div>
 
             {/* <span>#{product.id}</span> */}
-            <span>{product.stock} items</span>
+            <span className="flex items-center gap-2">
+              {product.stock} items
+              {isLowStock(product.stock) && (
+                <AlertTriangle className="h-4 w-4 text-yellow-500" title="Low stock" />
+              )}
+            </span>
             <span>{product.category?.name || "-"}</span>
             <span>${product.cost.toFixed(2)}</span>
             <span>${product.price.toFixed(2)}</span>

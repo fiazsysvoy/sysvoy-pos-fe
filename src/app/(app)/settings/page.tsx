@@ -16,12 +16,32 @@ const Settings = () => {
   const { user, loading, logout, refreshUser } = useUser();
 
   const [name, setName] = useState("");
+  const [lowStockThreshold, setLowStockThreshold] = useState(10);
+  const [loadingOrg, setLoadingOrg] = useState(false);
 
   useEffect(() => {
     if (user) {
       setName(user.name);
     }
   }, [user]);
+
+  useEffect(() => {
+    const fetchOrganization = async () => {
+      try {
+        setLoadingOrg(true);
+        const res = await api.get("/api/account/organization");
+        console.log("getOrganization", res.data);
+        if (res.data.success && res.data.data) {
+          setLowStockThreshold(res.data.data.lowStockThreshold || 10);
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch organization settings:", err);
+      } finally {
+        setLoadingOrg(false);
+      }
+    };
+    fetchOrganization();
+  }, []);
 
   const updateProfile = async () => {
     try {
@@ -37,6 +57,28 @@ const Settings = () => {
       toast.error(
         err.response?.data?.errors?.[0] || "Failed to update profile",
       );
+    }
+  };
+
+  const updateLowStockThreshold = async () => {
+    try {
+      if (lowStockThreshold < 0) {
+        toast.error("Threshold must be a positive number");
+        return;
+      }
+      setLoadingOrg(true);
+      await api.put("/api/account/organization", {
+        lowStockThreshold: lowStockThreshold,
+      });
+      toast.success("Low stock threshold updated");
+    } catch (err: any) {
+      console.log(err);
+      toast.error(
+        err.response?.data?.errors?.[0] ||
+          "Failed to update low stock threshold",
+      );
+    } finally {
+      setLoadingOrg(false);
     }
   };
 
@@ -85,11 +127,41 @@ const Settings = () => {
           <CardHeader>
             <CardTitle>Organization</CardTitle>
           </CardHeader>
-          <CardContent className="flex justify-between flex-wrap">
-            <p className="font-medium">Name:</p>
-            <p className="text-sm text-muted-foreground">
-              {user.organization?.name}{" "}
-            </p>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between flex-wrap">
+              <p className="font-medium">Name:</p>
+              <p className="text-sm text-muted-foreground">
+                {user.organization?.name}{" "}
+              </p>
+            </div>
+            {user.role === "ADMIN" && (
+              <div className="space-y-2 pt-4 border-t">
+                <Label>Low Stock Threshold</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={lowStockThreshold}
+                    onChange={(e) =>
+                      setLowStockThreshold(parseInt(e.target.value) || 0)
+                    }
+                    className="w-32"
+                    disabled={loadingOrg}
+                  />
+                  <Button
+                    onClick={updateLowStockThreshold}
+                    disabled={loadingOrg}
+                    className="bg-gray-900 text-background dark:bg-chart-accent"
+                  >
+                    {loadingOrg ? "Saving..." : "Update"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Products with stock at or below this number will trigger low
+                  stock alerts
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

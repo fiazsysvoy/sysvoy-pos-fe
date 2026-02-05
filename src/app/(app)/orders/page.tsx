@@ -93,7 +93,6 @@ export default function OrdersPage() {
 
   // Effect for order search with debounce
   useEffect(() => {
-    // Skip debounce on initial mount, fetch immediately
     if (isInitialMount.current) {
       isInitialMount.current = false;
       fetchOrders();
@@ -105,7 +104,7 @@ export default function OrdersPage() {
         fetchOrders(searchQuery || undefined);
       },
       searchQuery ? 500 : 0,
-    ); // No debounce when clearing search, 500ms when typing
+    );
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery, fetchOrders]);
@@ -194,9 +193,7 @@ export default function OrdersPage() {
     }
   };
 
-  // Filter orders by status only (search is now server-side)
   const filteredOrders = orders.filter((order) => {
-    // Filter by status
     if (selectedFilter !== "all") {
       if (selectedFilter === "in_process") {
         if (order.status !== "IN_PROCESS") return false;
@@ -210,21 +207,25 @@ export default function OrdersPage() {
     return true;
   });
 
-  const handlePrintOrder = async (orderId: string, download: boolean = false) => {
+  const handlePrintOrder = async (
+    orderId: string,
+    download: boolean = false,
+  ) => {
     try {
       setPrintingId(orderId);
-      const res = await api.get(`/api/orders/${orderId}/print${download ? "?download=true" : ""}`, {
-        responseType: "blob",
-      });
+      const res = await api.get(
+        `/api/orders/${orderId}/print${download ? "?download=true" : ""}`,
+        {
+          responseType: "blob",
+        },
+      );
 
       const blob = new Blob([res.data], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
 
       if (download) {
-        // Trigger download
         const link = document.createElement("a");
         link.href = url;
-        // Extract filename from Content-Disposition header if available
         const contentDisposition = res.headers["content-disposition"];
         let filename = `order-${orderId.slice(-8)}.pdf`;
         if (contentDisposition) {
@@ -237,12 +238,10 @@ export default function OrdersPage() {
         document.body.removeChild(link);
         toast.success("Order receipt downloaded");
       } else {
-        // Open in new tab
         window.open(url, "_blank");
         toast.success("Order receipt opened in new tab");
       }
 
-      // Cleanup after a delay
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
       toast.error(
@@ -263,7 +262,6 @@ export default function OrdersPage() {
 
       toast.success("Order cancelled successfully");
 
-      // Refresh the orders list to reflect updated status
       await fetchOrders(searchQuery || undefined);
     } catch (err: any) {
       toast.error(
@@ -279,10 +277,8 @@ export default function OrdersPage() {
     if (typeof window === "undefined") return;
 
     try {
-      // First, ensure payment is completed
       if (order.paymentStatus !== "COMPLETED") {
         if (order.paymentMethod === "CASH" || !order.paymentMethod) {
-          // Cash payment - process directly
           try {
             const paymentResponse = await api.post(`/api/payments/initiate`, {
               orderId: order.id,
@@ -297,9 +293,8 @@ export default function OrdersPage() {
             }
 
             toast.success("Cash payment processed");
-            // Refresh orders to get updated payment status
             await fetchOrders(searchQuery || undefined);
-            return; // Exit early, user can click Pay Bill again after refresh
+            return;
           } catch (cashErr: any) {
             toast.error(
               cashErr.response?.data?.message || "Cash payment failed",
@@ -308,7 +303,6 @@ export default function OrdersPage() {
             return;
           }
         } else {
-          // Gateway payment - prompt for customer phone (not stored in DB)
           const customerPhone = prompt(
             `Enter customer phone number for ${order.paymentMethod} payment:`,
           );
@@ -332,7 +326,6 @@ export default function OrdersPage() {
               toast.warning(
                 `Payment ${paymentData.status.toLowerCase()}. Please wait for payment confirmation.`,
               );
-              // Refresh orders to get updated payment status
               await fetchOrders(searchQuery || undefined);
               return;
             }
@@ -341,7 +334,6 @@ export default function OrdersPage() {
               toast.info(
                 "Payment initiated. Please complete payment in the gateway.",
               );
-              // In production, you might want to: window.open(paymentData.redirectUrl, '_blank')
               await fetchOrders(searchQuery || undefined);
               return;
             } else {
@@ -357,13 +349,11 @@ export default function OrdersPage() {
         }
       }
 
-      // Payment is completed, now mark order as completed
       try {
         await api.patch(`/api/orders/${order.id}`, { status: "COMPLETED" });
         toast.success("Order completed successfully");
         await fetchOrders(searchQuery || undefined);
       } catch (completeErr: any) {
-        // If payment check fails on backend, show error
         if (completeErr.response?.status === 400) {
           toast.error(
             completeErr.response?.data?.message ||
@@ -389,7 +379,7 @@ export default function OrdersPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
         {/* Filter Tabs and Actions */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 flex-shrink-0">
           <div className="flex gap-2">
             <Button
               variant="ghost"
@@ -458,13 +448,16 @@ export default function OrdersPage() {
 
         {/* Orders Grid */}
         {loading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center flex-1">
             <p className="text-muted-foreground">Loading orders...</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="flex items-center justify-center flex-1">
+            <p className="text-muted-foreground">No orders found</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6 overflow-y-auto flex-1 pr-2 auto-rows-min">
             {filteredOrders.map((order, index) => {
-              // Choose the appropriate timestamp and label based on status
               let referenceDate: string = order.createdAt;
               let statusTimeLabel = "Created at";
 
@@ -482,7 +475,6 @@ export default function OrdersPage() {
               const orderStatus = getOrderStatus(order);
               const StatusIcon = orderStatus.icon;
 
-              // Determine status colors based on status type
               let statusBgColor = "bg-[#E3FFE4]";
               let statusDotColor = "bg-green-500";
               let statusTextColor = "text-black";
@@ -502,16 +494,20 @@ export default function OrdersPage() {
                 } else {
                   statusDotColor = "bg-red-500";
                 }
+              } else if (orderStatus.status === "Cancelled") {
+                statusBgColor = "bg-[#FFEBDE]";
+                statusDotColor = "bg-orange-500";
+                statusTextColor = "text-black";
               }
 
               return (
                 <Card
                   key={order.id}
-                  className="bg-card border-border p-6 flex flex-col h-[420px] w-full overflow-hidden"
+                  className="bg-card border-border p-6 flex flex-col w-full overflow-hidden"
                 >
                   {/* Header with Order Number and Customer Info */}
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-4 flex-1">
+                    <div className="flex items-center gap-4 flex-1 min-w-0 mr-3">
                       {/* Pink Order Number Badge */}
                       <div className="bg-[#FAC1D9] text-black text-2xl w-12 h-12 flex items-center justify-center rounded flex-shrink-0">
                         {String(index + 1).padStart(2, "0")}
@@ -528,7 +524,7 @@ export default function OrdersPage() {
                     {/* Status Badge Top Right */}
                     <div className="flex flex-col items-end flex-shrink-0">
                       <div
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md ${statusBgColor} ${statusTextColor} text-xs  mb-1`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md ${statusBgColor} ${statusTextColor} text-xs mb-1`}
                       >
                         <StatusIcon className="h-3.5 w-3.5" />
                         {orderStatus.status}
@@ -555,13 +551,20 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Order Items Table */}
-                  <div className="mb-3 flex-1 flex flex-col min-h-0">
+                  <div className="mb-3">
                     <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2 pb-1.5 border-b border-border">
                       <span>Qty</span>
                       <span>Items</span>
                       <span className="text-right">Price</span>
                     </div>
-                    <div className="space-y-2 mt-2 overflow-y-auto pr-1 flex-1 min-h-[120px]">
+                    {/* Items list: scrollable only when more than 4 items, otherwise static */}
+                    <div
+                      className={`space-y-2 mt-2 pr-1 ${
+                        order.items.length > 4
+                          ? "max-h-[108px] overflow-y-auto"
+                          : ""
+                      }`}
+                    >
                       {order.items.map((item) => (
                         <div
                           key={item.id}
@@ -570,7 +573,7 @@ export default function OrdersPage() {
                           <span className="text-card-foreground font-medium">
                             {String(item.quantity).padStart(2, "0")}
                           </span>
-                          <span className="text-card-foreground text-sm">
+                          <span className="text-card-foreground text-sm truncate">
                             {item.product.name}
                           </span>
                           <span className="text-right font-semibold text-card-foreground">
@@ -583,7 +586,7 @@ export default function OrdersPage() {
 
                   {/* Payment Info */}
                   {order.paymentMethod && (
-                    <div className="mb-2 pt-2 border-t border-border flex-shrink-0">
+                    <div className="mb-2 pt-2 border-t border-border">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           {(() => {
@@ -621,7 +624,7 @@ export default function OrdersPage() {
                   )}
 
                   {/* SubTotal */}
-                  <div className="mb-3 pt-2 border-t border-border flex-shrink-0">
+                  <div className="mt-auto pt-2 border-t border-border">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground text-sm">
                         SubTotal
@@ -633,7 +636,7 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2 mt-auto flex-shrink-0">
+                  <div className="flex items-center gap-2 mt-3">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -701,12 +704,6 @@ export default function OrdersPage() {
                 </Card>
               );
             })}
-          </div>
-        )}
-
-        {!loading && filteredOrders.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">No orders found</p>
           </div>
         )}
       </div>

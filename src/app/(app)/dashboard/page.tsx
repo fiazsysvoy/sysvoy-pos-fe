@@ -3,6 +3,7 @@
 import ChartCard from "@/app-components/chartCard";
 import { OverviewChart } from "@/app-components/LineGraph";
 import ItemCard from "@/app-components/ItemCard";
+import { LowStockAlert } from "@/app-components/low-stock-alert";
 import { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { toast } from "sonner";
@@ -193,6 +194,9 @@ const DashBoard = () => {
 
   return (
     <>
+      <div className="p-6">
+        <LowStockAlert />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
         <ChartCard
           title="Today's Revenue"

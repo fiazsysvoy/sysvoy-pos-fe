@@ -8,6 +8,7 @@ import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import CategoryCards from "@/app-components/category-cards";
 import MenuTable from "@/app-components/menu-table";
 import SingleProductSidebar from "@/app-components/single-product-sidebar";
+import { LowStockAlert } from "@/app-components/low-stock-alert";
 import { toast } from "sonner";
 import api from "@/lib/axios";
 import CategorySidebar from "@/app-components/category-sidebar";
@@ -173,6 +174,9 @@ export default function MenuPage() {
   return (
     <>
       <div className="p-6 space-y-6 text-white">
+        {/* Low Stock Alert */}
+        <LowStockAlert />
+        
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="text-xl font-semibold text-black dark:text-white">
